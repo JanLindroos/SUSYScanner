@@ -1,0 +1,24 @@
+# Example input in SLHA format, and suitable for input to
+# SOFTSUSY (v1.8 or higher): benchmark point - see arXiv:1109.3859
+Block MODSEL		     # Select model
+    1    2		     # mGMSB
+Block SMINPUTS		     # Standard Model inputs
+    1     1.27908970E+02   # alpha^(-1) SM MSbar(MZ)
+    2     1.16637870E-05   # G_Fermi
+    3     1.18400000E-01   # alpha_s(MZ) SM MSbar
+    4     9.11876000E+01   # MZ(pole)
+    5     4.18000000E+00   # mb(mb) SM MSbar
+    6     1.73200000E+02   # mtop(pole)
+	7     1.77700000E+00   # mtau(pole)
+Block MINPAR		     # Input parameters
+    1   8.100000000e+04	     # Lambda
+    2   9.000000000e+04	     # mMess
+    3   1.500000000e+01	     # tanb
+    4   1.000000000e+00	     # sgmu
+    5   1.000000000e+00	     # Nmess
+    6   1.000000000e+00      # Cgrav
+Block SOFTSUSY               # Optional SOFTSUSY-specific parameters
+    1   1.000000000e-03      # Numerical precision: suggested range 10^(-3...-6)
+    2   0.000000000e+00	     # Quark mixing parameter: see manual
+    5   1.000000000e+00      # Include 2-loop scalar mass squared/trilinear RGEs
+    11  1.200000000e+19	     # Gravitino mass

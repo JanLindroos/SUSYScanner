@@ -1,0 +1,59 @@
+#The errors are represented by 8 digit integers, where the first number
+#specifies the tool and the last number the error, T0...0E
+#Ex: 10000128: failed softsusy due to wrong LSP
+
+softsusy: 1
+	Higgs potential ufb: 2
+	tachyon: 4
+	m3sq-problem: 8
+	Inaccurate Higgs mass: 16
+	No convergence: 32
+	Numerical problemThrown: 64
+	Wrong LSP: 128
+	No slha: 256
+	NaNs present: 512
+	Unknown error: 1024	
+
+susyhit: 2
+	NaN decay: 2
+	Unknown error: 4
+
+feynhiggs: 3
+	negative sbottom mass squares: 2
+	DRbartoOS transition failed: 4
+	error computing Mh1: 8
+	No slha: 16
+	NaN output: 32
+	Unknown error: 64
+	
+higgsbounds: 4
+	negative sbottom mass squares: 2
+	DRbartoOS transition failed: 4
+	error computing Mh1: 8
+	No slha: 16
+	NaN output: 32
+	Unknown error: 64
+
+micromegas: 5
+	Dark Matter has electric charge: 2
+	Dark Matter is a color particle: 4
+	~o1 is not CDM: 8
+	NaN output: 16
+	Unknown Error: 32
+
+pythia: 6
+	Unknown error: 2
+	
+prospino: 7
+	Unknown error: 2
+
+delphes: 8
+	Unknown error: 2
+	
+
+
+
+
+
+
+

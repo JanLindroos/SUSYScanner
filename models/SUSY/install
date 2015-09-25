@@ -1,0 +1,386 @@
+#! /usr/bin/env python
+"""
+*********Make script for installing SUSY tools***************
+Created on Sun Dec 14 00:41:27 2014
+@author: Jan Lindroos
+
+Usage:
+./install [cmd (default: make)] [tools (default:all+check root)] [opt (default:none)]
+cmd: 
+    make    - extracts, installs and tests specified tools (default all+check root)
+    extract - only extracts the tools in the tool directory for manual installation
+    test    - tests if specified tools are working properly
+    clean   - uninstalls specified tools (default all)
+    help    - print documentation
+tools (all):
+     softsusy    - SUSY spectrum generator
+     susyhit     - Sparticle and Higgs decay calculator
+     feynhiggs   - Higgs mass and decay calculator
+     higgsbounds - Calculates Higgs constraints
+     micromegas  - Relic density and DM rates
+     pythia      - Event generator
+     delphes     - Detector simulator
+dependencies:
+     root        - Fileformat for storing events, optionally installed with delphes and pythia installations
+     hepmc       - Fileformat for storing events, installed with pythia
+opt:
+     -for_cray           - Uses gnus cray compiler wrappers to install
+     -enable_crayopt     - Compiles with reccomended optimization flags for cray
+     -F77C=[compiler]    - Set fortran 77 compiler
+     -F90C=[compiler]    - Set fortran 90 compiler
+     -FHINCLUDE=[path]   - Set path to Feynhiggs include folder
+     -FHLIBS=[path]      - Set path to Feynhiggs lib64 folder
+     -HEPMC=[path]       - Set path to hepmc install folder
+     
+example commands:
+make all:
+     ./install
+make all for running on hexagon:
+    ./install hex
+make all tools for hexagon using optimization flags:
+    ./install hexopt
+make softsusy with gfortran as F77 compiler: 
+     ./install softsusy -F77C=gfortran      
+    
+******************************************************************    
+"""
+import os, sys, shutil
+import datetime
+import tarfile
+sys.path.append(os.path.join(os.getcwd().split('models')[0][0:-1],'lib'))
+import io_lib as io
+
+#Initialize*****************************************************************************
+#Set compilers
+F77C='gfortran'
+F90C='gfortran'
+CC='gcc'
+
+#log the installation progress
+logfile='install.log'
+log=open(logfile,'w')
+log.write('************ Installation log %s ***************\n\n'%(datetime.datetime.now().strftime("%Y-%m-%d %H:%M")))
+
+
+#print log to file and screen
+def write_log(string):
+    print string
+    log.write(string+'\n')
+    return
+write_log('***Running SUSY installation script***\n')
+
+#source files: root and hepmc are required for event generation
+source_files={'root':'root_5.34.22.tar.gz',
+       'hepmc':'hepmc_2.06.09.tar.gz',
+       'softsusy':'softsusy_3.5.2.tar.gz',
+       'susyhit':'susyhit_1.4.tar.gz',
+       'feynhiggs':'feynhiggs_2.10.0.tar.gz',
+       'higgsbounds':'higgsbounds_4.1.2.tar.gz',
+       'micromegas':'micromegas_3.5.5.tar.gz',
+       'pythia':'pythia_8.2.01.tar.gz',
+       'madgraph':'mg5amc_2.2.2.tar.gz',
+       'delphes':'delphes_3.2.0.tar.gz',
+       'prospino':'prospino_2.1.tar.gz'}
+       
+#main working directory
+main_path=os.getcwd()       
+#install path
+install_path=os.path.join(main_path,'tools')
+
+#Input dictionary
+inputs={'mode':['make','clean','help','extract','repack','test'],
+        'tools':['root','hepmc','softsusy','susyhit','feynhiggs','higgsbounds','micromegas','pythia','delphes','madgraph','prospino'],
+        'options':['-hex','-hexopt','-F77C','-F90C','-CC','-FHINCLUDE','-FHLIBS','-HEPMC','-withroot']}
+
+#Initialize user input
+#defaul higgs and hepmc paths
+higgs_path=os.path.join(install_path,'feynhiggs',source_files['feynhiggs'].rstrip('.tar.gz'),'install')
+hepmc_path=os.path.join(install_path,'hepmc',source_files['hepmc'].rstrip('.tar.gz'),'install')      
+user_input={'mode':'make','tools':[],'options':{'withroot':0,'hex':0,'hexopt':0,'F77C':F77C,'F90C':F90C,'CC':CC,
+            'FHINCLUDE':os.path.join(higgs_path,'include'),
+            'FHLIBS':os.path.join(higgs_path,'lib64'),
+            'HEPMC':hepmc_path}}
+#***************************************************************************************
+
+
+#Parse input argument*******************************************************************
+#No arguments, use default
+if len(sys.argv)==1:
+    user_input['mode']='make'
+    user_input['tools']+=['softsusy','susyhit','feynhiggs','higgsbounds','micromegas','pythia','delphes','prospino']
+else:   
+    #Parse options and tools
+    for arg in sys.argv[1::]:
+        #check if arg is in mode
+        if arg in inputs['mode']:
+            user_input['mode']=arg
+        #check if arg is an option
+        elif arg[0]=='-':
+            if arg.split('=')[0] in inputs['options']:
+                if arg in ['-hex','-hexopt','-withroot']:
+                    user_input['options'][arg[1::]]=1
+                else:
+                    user_input['options'][arg[1::].split('=')[0]]=arg[1::].split('=')[1]    
+            else:
+                write_log('%s is not a valid argument'%(arg))                  
+                log.close()
+                sys.exit()
+        #check if arg is a tool
+        elif arg in inputs['tools']:
+            if arg not in user_input['tools']:
+                user_input['tools']+=[arg]
+            else:
+                write_log('%s already included in tools, ignored'%(arg))    
+        #Exit if cmd contains unknown arguments                
+        else:
+            write_log('%s is not a valid argument'%(arg))
+            write_log('possible commands: %s'%(' '.join(inputs['mode'])))
+            write_log('possible tools: %s'%(' '.join(inputs['tools'])))
+            write_log('possible options: %s'%(' '.join(inputs['options'])))
+            log.close()
+            sys.exit()
+
+#install default tools if mode is make and tools is empty
+if user_input['mode']in ['make','test'] and not user_input['tools']:
+    user_input['tools']+=['softsusy','susyhit','feynhiggs','higgsbounds','micromegas','pythia','delphes']
+
+#check if hepmc or root should be installed as well
+if user_input['mode']=='make':
+    #check if root should be installed
+    if user_input['options']['withroot']:
+        user_input['tools'].insert(0,'root')
+    write_log('checking dependencies...:')
+    #check wether hepmc should be installed (needed by pythia)
+    if 'pythia' in user_input['tools'] and not os.path.exists(user_input['options']['HEPMC']):
+        #install HEPMC if external path not set
+        if user_input['options']['HEPMC']==hepmc_path:
+            write_log('no hepmc install detected, installing pythia will also install hepmc')
+            #add hepmc to tool list before pythia
+            user_input['tools'].insert(0,'hepmc')
+        else:        
+            write_log('external hepmc version specified, but not detected, pythia will not be installed')
+            user_input['tools'].remove('pythia')
+    #check wether root is installed and set up (needed by delphes)
+    if 'delphes' in user_input['tools'] and 'root' not in user_input['tools']:
+        write_log('checking ROOT installation...')
+        from install_lib import check_root
+        output,status=check_root()
+        write_log(output)
+        if status:
+            write_log('ROOT successfully detected')
+        else:
+            write_log('ROOT not properly set up, delphes will not be installed')
+            user_input['tools'].remove('delphes')
+            write_log('ROOT can be installed by running ./install with the option -withroot')
+
+write_log('installation setup:')
+write_log('cmd: %s %s'%(user_input['mode'],' '.join(user_input['tools'])))
+write_log('settings:\n%s'%'\n'.join(['%s=%s'%(key,str(user_input['options'][key])) for key in user_input['options'].keys()]))
+write_log('\n')
+#***************************************************************************************
+
+
+#Execute cmd****************************************************************************
+#print doumentation*******************
+if user_input['mode']=='help':
+            print __doc__
+            log.close()
+            sys.exit()
+            
+            
+#make tools***************************            
+if user_input['mode'] in ['make','extract','test']:
+    test_results=dict([(tool,'untested') for tool in user_input['tools']])
+    make_results=dict([(tool,'unmade') for tool in user_input['tools']])
+    #Set up paths.txt
+    if os.path.exists('paths.txt'):
+        write_log('Removing paths.txt')
+        os.remove('paths.txt')
+    write_log('Creating paths.txt')
+    f=open('paths.txt','w')
+    for tool in source_files.keys():            
+        tool_path=os.path.join(install_path,tool,source_files[tool].rstrip('.tar.gz'))
+        f.write('%s %s\n'%(tool,tool_path))
+    f.close()
+    
+    #import install library
+    import install_lib as il
+    
+    #import benchmark models for tools test**************************************** 
+    from pMSSM_model import model
+    model.evgen['nevt']=10000
+    model.evgen['mode']='SUSYMG'
+    model.evgen['threads']=10
+    model.evgen['NLO']=1#Wether to do full NLO prospino
+    model_nr=0#0: pmssm
+    
+    #Set up test dir
+    test_path=os.path.join(main_path,'test')
+    if os.path.exists(test_path):
+        shutil.rmtree(test_path)
+    os.mkdir(test_path)
+    #copy susyhit.in to test_path
+    for inputfile in model.inputfiles.values():
+        if os.path.isfile(inputfile):
+            shutil.copy(inputfile,os.path.join(test_path,os.path.split(inputfile)[1]))
+        if os.path.isdir(inputfile):
+            shutil.copytree(inputfile,os.path.join(test_path,os.path.split(inputfile)[1]))
+    
+    #Det parameters from test_points.dat
+    params_set=io.read_params(os.path.join('benchmarks','pMSSM_bino_benchmarks.dat'),'dat')
+    #Benchmark values for all parameters
+    bench_params={}
+    for name in params_set.keys():
+        bench_params[name]=params_set[name][model_nr]
+
+    #input parameters for test model
+    test_params={}    
+    for name in model.model_params+['modelid']:
+        test_params[name]=params_set[name][model_nr]
+    
+    modelid=str(test_params.pop('modelid'))
+    
+    #change to test_path for running
+    os.chdir(test_path)
+     
+    test_model=model(modelid,test_params)
+    
+    #check if softsusy is used to complete slha file, else use benchmark slha
+    if 'softsusy' not in user_input['tools']:
+        shutil.copy(os.path.join(main_path,'benchmarks','slha',test_model.slhafile),test_model.slhafile)
+    #copy hepmc files if pythia is not used to create them
+    if 'delphes' in user_input['tools'] and 'pythia' not in user_input['tools']:
+        test_model.hepmcfiles=[]
+        for hepmcfile in os.listdir(os.path.join(main_path,'benchmarks','hepmc')):
+            if hepmcfile.split('_')[0]==test_model.modelid:
+                tar_file=tarfile.open(os.path.join(main_path,'benchmarks','hepmc',hepmcfile),'r:gz')
+                test_model.hepmcfiles+=[hepmcfile.rstrip('.tar.gz')]
+                tar_file.extractall()
+                tar_file.close()
+    #change back to main directory    
+    os.chdir(main_path)
+    #*******************************************************************************
+    
+    #main working directory
+    main_path=os.getcwd()
+    #check if tools directory exists  
+    if not os.path.exists(install_path):
+            write_log('Creating %s'%(install_path))
+            os.mkdir(install_path)
+    
+    #Go through tools        
+    for tool in user_input['tools']:
+        write_log('\n%s %s'%(user_input['mode'],tool)) 
+        tool_path=os.path.join(install_path,tool,source_files[tool].rstrip('.tar.gz'))
+        
+        #Extract tool from source
+        if user_input['mode'] in ['make','extract']:
+            #check and remove if tool already exists:
+            if os.path.exists(tool_path):
+                write_log('Removing %s'%(tool_path)) 
+                shutil.rmtree(tool_path)
+        
+            write_log('Extracting source: %s'%(source_files[tool]))
+            output,status=il.extract(tool,source_files[tool])
+        
+        #Install tool
+        if user_input['mode']=='make':
+            write_log('Installing %s....'%(tool_path))
+            #move to install dir
+            
+            write_log('changing working directory: %s'%(tool_path))
+            os.chdir(tool_path)
+            
+            #Install tool
+            output,status=il.install_tool(tool,user_input['options'])
+            
+            #move back
+            write_log('changing working directory: %s'%(main_path))
+            os.chdir(main_path)            
+            
+            if status:
+                write_log('%s installed without errors.'%(tool))
+                make_results[tool]='success'
+            else:
+                write_log('%s installation failed:\n%s\nPlease try a manual install'%(tool,output))
+                make_results[tool]='failed'
+        
+        #test tool
+        if user_input['mode'] in ['make','test'] and tool in model.parts:
+            write_log('Testing %s...'%(tool))
+            
+        #try:
+            os.chdir(test_path)
+            test_model.calculate(tool)
+            os.chdir(main_path)
+            test_params=dict([(key,test_model.params[key]) for key in test_model.part_params[tool]])
+            if test_model.error==0:
+                test_results[tool]='success'
+                write_log('%s finished with no errors:'%(tool))
+                write_log(il.test_results(test_params,bench_params))
+            else:
+                test_results[tool]='failed'
+                write_log('%s test failed with error %i:'%(tool,test_model.error))    
+        #except:
+            #write_log('Unable to run %s test'%(tool))
+    
+    #write summary of make/test
+    if user_input['mode'] in ['make','test']:
+        write_log('finished with status:')
+        for tool in user_input['tools']:
+            write_log('%s: make=%s , test=%s'%(tool,make_results[tool],test_results[tool])) 
+    #finalize model
+    test_model.finalize()             
+    
+#remove tools*************************    
+if user_input['mode']=='clean':
+    write_log('\nRemoving tools...')
+    #remove paths.txt
+    if os.path.exists('paths.txt'):
+        write_log('Removing paths.txt')
+        os.remove('paths.txt')
+    #check if tools exist:   
+    if os.path.exists(install_path):
+        #Remove all tools, if none specified
+        if not user_input['tools']:
+            shutil.rmtree(install_path)
+            write_log('%s removed'%(install_path))
+        else:
+            for tool in user_input['tools']:
+                tool_path=os.path.join(install_path,tool,source_files[tool].rstrip('.tar.gz'))
+                if os.path.exists(tool_path):
+                    shutil.rmtree(tool_path)
+                else:
+                    write_log('%s not installed in %s, nothing to be done'%(tool,tool_path))
+                    
+    else:
+        write_log('%s does not exist, nothing to clean'%(install_path))
+#***************************************************************************************
+        
+#repack tool****************************************************************************
+if user_input['mode']=='repack':
+    #For safety reasons, only allow packing one tool at a time
+    if len(user_input['tools'])!=1:
+        write_log('Exactly one tool can be packed at a time, selected tools: %s'%(' '.join(user_input['tools'])))
+    else:
+        tool=user_input['tools'][0]
+    tool_path=os.path.join(install_path,tool,source_files[tool].rstrip('.tar.gz'))
+    if not os.path.exists(tool_path):
+        write_log('Path %s does not exist, unable to pack'%tool_path)
+    else:
+        import tarfile
+        #pack folder version
+        tar_name=os.path.basename(tool_path)
+        tar_file=tarfile.open(tar_name+'.tar.gz','w:gz')
+        tar_file.add(tool_path, arcname=tar_name)
+        tar_file.close()
+        write_log('Compressed %s'%(tool_path))
+        #copy back to src folder
+        source_path=os.path.join('src',tar_name+'.tar.gz')
+        shutil.move(tar_name+'.tar.gz',source_path)
+        write_log('%s replaced'%(source_path))
+
+#Finalize*******************************************************************************
+write_log('\nFinished!')  
+log.close()
+#***************************************************************************************

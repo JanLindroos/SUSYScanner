@@ -1,0 +1,40 @@
+#************************************************************
+#*                     MadGraph5_aMC@NLO                    *
+#*                                                          *
+#*                *                       *                 *
+#*                  *        * *        *                   *
+#*                    * * * * 5 * * * *                     *
+#*                  *        * *        *                   *
+#*                *                       *                 *
+#*                                                          *
+#*                                                          *
+#*         VERSION 2.1.2                 2014-07-03         *
+#*                                                          *
+#*    The MadGraph5_aMC@NLO Development Team - Find us at   *
+#*    https://server06.fynu.ucl.ac.be/projects/madgraph     *
+#*                                                          *
+#************************************************************
+#*                                                          *
+#*               Command File for MadGraph5_aMC@NLO         *
+#*                                                          *
+#*     run as ./bin/mg5_aMC  filename                       *
+#*                                                          *
+#************************************************************
+import model mssm
+define p = g u c d s u~ c~ d~ s~
+define j = g u c d s u~ c~ d~ s~
+define l+ = e+ mu+
+define l- = e- mu-
+define vl = ve vm vt
+define vl~ = ve~ vm~ vt~ 
+define sq= ul cl t1 ur cr t2 dl sl b1 dr sr b2 ul~ cl~ t1~ ur~ cr~ t2~ dl~ sl~ b1~ dr~ sr~ b2~ 
+define slep= el- mul- ta1- er- mur- ta2- el+ mul+ ta1+ er+ mur+ ta2+ sve svm svt sve~ svm~ svt~
+define n=n1 n2 n3 n4 x1+ x2+ x1- x2-
+generate p p > go go
+add process p p > go sq
+add process p p > sq sq
+add process p p > n n
+add process p p > n go
+add process p p > n sq
+add process p p > slep slep
+output /work/jli051/SUSYScannerMPI/tmpl/MG_pp_all

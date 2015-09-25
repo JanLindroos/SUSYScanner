@@ -1,0 +1,33 @@
+//******************Phytia input_card******************************
+
+//General Pythia Options*******************************************
+//Turn off multiparton interactions
+PartonLevel:MPI = off
+PhaseSpace:pTHatMin = 20.
+//PDF used 8:PDF CTEQ6L1, 9:PDF CTEQ66(NLO) 
+PDF:pSet=8
+
+//SUSY Processes
+//SUSY:all=on
+//Prospino: gg
+SUSY:gg2gluinogluino=on
+SUSY:qqbar2gluinogluino=on
+//Prospino: gs
+SUSY:qg2squarkgluino=on
+//Prospino: sb+bb+tb
+SUSY:gg2squarkantisquark=on
+SUSY:qqbar2squarkantisquark=on
+//Prospino: ss
+SUSY:qq2squarksquark=on
+//Prospino: nn
+SUSY:qqbar2chi0chi0=on
+SUSY:qqbar2chi+-chi0=on
+SUSY:qqbar2chi+chi-=on
+//Prospino: ns
+SUSY:qg2chi0squark=on
+SUSY:qg2chi+-squark=on
+//Prospino: ng
+SUSY:qqbar2chi0gluino=on
+SUSY:qqbar2chi+-gluino=on
+//Prospino: ll
+SUSY:qqbar2sleptonantislepton=on
