@@ -10,7 +10,7 @@ cmd:
     make    - extracts, installs and tests specified tools (default all+check root)
     extract - only extracts the tools in the tool directory for manual installation
     test    - tests if specified tools are working properly
-    clean   - uninstalls specified tools (default all)
+    clean   - uninstalls specified tools (default all tools, but not root & hepmc)
     help    - print documentation
 tools (all):
      softsusy    - SUSY spectrum generator
@@ -21,16 +21,21 @@ tools (all):
      pythia      - Event generator
      delphes     - Detector simulator
 dependencies:
-     root        - Fileformat for storing events, optionally installed with delphes and pythia installations
+     root        - Fileformat for storing events, optionally installed with delphes installations (Currently not working)
      hepmc       - Fileformat for storing events, installed with pythia
+
 opt:
-     -for_cray           - Uses gnus cray compiler wrappers to install
-     -enable_crayopt     - Compiles with reccomended optimization flags for cray
-     -F77C=[compiler]    - Set fortran 77 compiler
-     -F90C=[compiler]    - Set fortran 90 compiler
+     -hex                - Uses gnus cray compiler wrappers to install (for hexagon installation)
+     -hexopt             - Compiles with recommended optimization flags for cray
+     -F77C=[compiler]    - Set fortran 77 compiler (Currently not working)
+     -F90C=[compiler]    - Set fortran 90 compiler (Currently not working)
+     -CC=[compiler]      - Set C++ compiler (Currently not working)
      -FHINCLUDE=[path]   - Set path to Feynhiggs include folder
      -FHLIBS=[path]      - Set path to Feynhiggs lib64 folder
      -HEPMC=[path]       - Set path to hepmc install folder
+     -withroot           - Installs ROOT with delphes (Currently not working)
+     -all                - clean option, complete clean up of SUSY directory
+     -keep_test          - keep the results from tool tests
      
 example commands:
 make all:
@@ -67,7 +72,7 @@ def write_log(string):
     print string
     log.write(string+'\n')
     return
-write_log('***Running SUSY installation script***\n')
+write_log('******Running SUSY installation script******\n')
 
 #source files: root and hepmc are required for event generation
 source_files={'root':'root_5.34.22.tar.gz',
@@ -90,13 +95,14 @@ install_path=os.path.join(main_path,'tools')
 #Input dictionary
 inputs={'mode':['make','clean','help','extract','repack','test'],
         'tools':['root','hepmc','softsusy','susyhit','feynhiggs','higgsbounds','micromegas','pythia','delphes','madgraph','prospino'],
-        'options':['-hex','-hexopt','-F77C','-F90C','-CC','-FHINCLUDE','-FHLIBS','-HEPMC','-withroot']}
+        'options':['-hex','-hexopt','-F77C','-F90C','-CC','-FHINCLUDE','-FHLIBS','-HEPMC','-withroot','-all','-keep_test']}
 
 #Initialize user input
 #defaul higgs and hepmc paths
 higgs_path=os.path.join(install_path,'feynhiggs',source_files['feynhiggs'].rstrip('.tar.gz'),'install')
 hepmc_path=os.path.join(install_path,'hepmc',source_files['hepmc'].rstrip('.tar.gz'),'install')      
-user_input={'mode':'make','tools':[],'options':{'withroot':0,'hex':0,'hexopt':0,'F77C':F77C,'F90C':F90C,'CC':CC,
+user_input={'mode':'make','tools':[],'options':{'withroot':0,'hex':0,'hexopt':0,'all':0,'keep_test':0,
+            'F77C':F77C,'F90C':F90C,'CC':CC,
             'FHINCLUDE':os.path.join(higgs_path,'include'),
             'FHLIBS':os.path.join(higgs_path,'lib64'),
             'HEPMC':hepmc_path}}
@@ -117,7 +123,7 @@ else:
         #check if arg is an option
         elif arg[0]=='-':
             if arg.split('=')[0] in inputs['options']:
-                if arg in ['-hex','-hexopt','-withroot']:
+                if arg in ['-hex','-hexopt','-withroot','-all','-keep_test']:
                     user_input['options'][arg[1::]]=1
                 else:
                     user_input['options'][arg[1::].split('=')[0]]=arg[1::].split('=')[1]    
@@ -270,7 +276,8 @@ if user_input['mode'] in ['make','extract','test']:
     
     #Go through tools        
     for tool in user_input['tools']:
-        write_log('\n%s %s'%(user_input['mode'],tool)) 
+        output,status=['%s not installed'%tool,1]
+        write_log('\n%s\n'%(('%s %s'%(user_input['mode'],tool)).upper().center(20,'*'))) 
         tool_path=os.path.join(install_path,tool,source_files[tool].rstrip('.tar.gz'))
         
         #Extract tool from source
@@ -285,7 +292,7 @@ if user_input['mode'] in ['make','extract','test']:
         
         #Install tool
         if user_input['mode']=='make':
-            write_log('Installing %s....'%(tool_path))
+            write_log('\nInstalling %s....'%(tool_path))
             #move to install dir
             
             write_log('changing working directory: %s'%(tool_path))
@@ -307,7 +314,7 @@ if user_input['mode'] in ['make','extract','test']:
         
         #test tool
         if user_input['mode'] in ['make','test'] and tool in model.parts:
-            write_log('Testing %s...'%(tool))
+            write_log('\nTesting %s...'%(tool))
             
         #try:
             os.chdir(test_path)
@@ -320,7 +327,7 @@ if user_input['mode'] in ['make','extract','test']:
                 write_log(il.test_results(test_params,bench_params))
             else:
                 test_results[tool]='failed'
-                write_log('%s test failed with error %i:'%(tool,test_model.error))    
+                write_log('%s test failed with error %i\ninstall output:\n%s '%(tool,test_model.error,output))    
         #except:
             #write_log('Unable to run %s test'%(tool))
     
@@ -328,23 +335,35 @@ if user_input['mode'] in ['make','extract','test']:
     if user_input['mode'] in ['make','test']:
         write_log('finished with status:')
         for tool in user_input['tools']:
-            write_log('%s: make=%s , test=%s'%(tool,make_results[tool],test_results[tool])) 
+            write_log('%15s:%15s %15s'%(tool,'make=%s'%(make_results[tool]),'test=%s'%(test_results[tool]))) 
     #finalize model
     test_model.finalize()             
     
 #remove tools*************************    
 if user_input['mode']=='clean':
-    write_log('\nRemoving tools...')
-    #remove paths.txt
-    if os.path.exists('paths.txt'):
-        write_log('Removing paths.txt')
-        os.remove('paths.txt')
+    write_log('\nCleaning SUSY tools...')
+
+    if user_input['options']['all']:
+        #remove paths.txt
+        if os.path.exists('paths.txt'):
+            print 'Removing paths.txt'
+            os.remove('paths.txt')
+        #remove test directory
+        if os.path.exists('test'):
+            print 'Removing test directory'
+            shutil.rmtree('test')
+        #remove all .pyc files
+        pycfiles=[pyc for pyc in os.listdir('.') if pyc.split('.')[-1]=='pyc']
+        for pyc in pycfiles:
+            print 'Removing %s'%(pyc)
+            os.remove(pyc)
+        
     #check if tools exist:   
     if os.path.exists(install_path):
         #Remove all tools, if none specified
-        if not user_input['tools']:
-            shutil.rmtree(install_path)
-            write_log('%s removed'%(install_path))
+        if 'all' in user_input['options']:
+                print 'removing %s'%(install_path)
+                shutil.rmtree(install_path)
         else:
             for tool in user_input['tools']:
                 tool_path=os.path.join(install_path,tool,source_files[tool].rstrip('.tar.gz'))
@@ -353,8 +372,6 @@ if user_input['mode']=='clean':
                 else:
                     write_log('%s not installed in %s, nothing to be done'%(tool,tool_path))
                     
-    else:
-        write_log('%s does not exist, nothing to clean'%(install_path))
 #***************************************************************************************
         
 #repack tool****************************************************************************
@@ -380,7 +397,22 @@ if user_input['mode']=='repack':
         shutil.move(tar_name+'.tar.gz',source_path)
         write_log('%s replaced'%(source_path))
 
-#Finalize*******************************************************************************
-write_log('\nFinished!')  
-log.close()
+#Finalize*******************************************************************************  
+
+#remove test directory
+if os.path.exists('test') and not user_input['options']['keep_test']:
+    write_log('Removing test directory')
+    shutil.rmtree('test')
+
+#remove install log if clean -all
+if user_input['mode']=='clean' and user_input['options']['all']:
+    log.close()
+    if os.path.exists('install.log'):
+        print 'Removing install.log'
+        os.remove('install.log')
+    print '\nFinished!'
+else:
+    write_log('\nFinished!')
+    log.close()
+    
 #***************************************************************************************

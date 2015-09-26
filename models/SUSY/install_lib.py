@@ -72,17 +72,22 @@ def test_results(test_params,bench_params):
     #print model data (10 parameters per line)
     N_perline=10
     N_params=len(test_params.keys())
-    N_lines=N_params/N_perline+1
-    pnames=sorted(test_params.keys())
-    print pnames
-    for i in range(N_lines):
-        j_range=range(N_perline*i,min(N_perline*i+9,N_params))
-        results+=''.join(['\n%15s'%('')]+['%15s'%(pnames[j]) for j in j_range])
-        results+=''.join(['\n%15s'%('benchmark')]+['%15s'%('%.3e'%(bench_params[pnames[j]])) for j in j_range])
-        results+=''.join(['\n%15s'%('test')]+['%15s'%('%.3e'%(test_params[pnames[j]])) for j in j_range])
-        #results+=''.join(['\n%15s'%('benchmark')]+['%15s'%(str(round(bench_params[test_params.keys()[j]],3))) for j in j_range])
-        #results+=''.join(['\n%15s'%('test')]+['%15s'%(str(round(test_params[test_params.keys()[j]],3))) for j in j_range])
-        results+='\n'
+    if N_params==0:
+        results+='no parameters parsed from this tool\n'
+    else:
+        N_lines=N_params/N_perline+1
+        pnames=sorted(test_params.keys())
+        #n_p=10
+        #p_string=('\n%18s'%(' ')).join([''.join(['%15s'%pnames[j] for j in range(i*n_p,min(len(pnames),(i+1)*n_p))]) for i in range(len(pnames)/n_p+1)])
+        #results+='%18s%s\n'%('parsed parameters:',p_string)
+        for i in range(N_lines):
+            j_range=range(N_perline*i,min(N_perline*i+9,N_params))
+            results+=''.join(['\n%15s'%('')]+['%15s'%(pnames[j]) for j in j_range])
+            results+=''.join(['\n%15s'%('benchmark')]+['%15s'%('%.3e'%(bench_params[pnames[j]])) for j in j_range])
+            results+=''.join(['\n%15s'%('test')]+['%15s'%('%.3e'%(test_params[pnames[j]])) for j in j_range])
+            #results+=''.join(['\n%15s'%('benchmark')]+['%15s'%(str(round(bench_params[test_params.keys()[j]],3))) for j in j_range])
+            #results+=''.join(['\n%15s'%('test')]+['%15s'%(str(round(test_params[test_params.keys()[j]],3))) for j in j_range])
+            results+='\n'
         
     return results
 
@@ -318,7 +323,6 @@ def install_delphes(options):
     config_flags=['']
     cmd=' '.join(['./configure']+config_flags)
     out,err=run_cmd(cmd)#install command
-    print out,err
     output+='*****************out**********:\n%s'%out
     output+='\n****************err*********:\n%s'%err
     if err=='unable to run cmd':
@@ -329,7 +333,6 @@ def install_delphes(options):
     make_flags=['-j']
     cmd=' '.join(['make']+make_flags)   
     out,err=run_cmd(cmd)#install command
-    print out,err
     output+='*****************out**********:\n%s'%out
     output+='\n****************err*********:\n%s'%err
     if err=='unable to run cmd':
@@ -349,7 +352,6 @@ def install_prospino(options):
     os.remove('Makefile')
     f=open('Makefile','w')
     for line in makelines:
-        print line,line.split('=')[0].strip()
         if line.split('=')[0].strip()=='DIRECT':
             line='DIRECT=%s\n'%(pro_path)
         f.write(line)
@@ -419,31 +421,48 @@ def install_hepmc(options):
     main_path=os.getcwd()
     
     #move to source dir
+    output+='\nrunning bootstrap.......'
     os.chdir(os.path.join(main_path,'src'))    
     #run ./bootsrap to do autconf/make    
     cmd='./bootstrap'
     out,err=run_cmd(cmd)
+    output+='*****************out**********:\n%s'%out
+    output+='\n****************err*********:\n%s'%err
+    if err=='unable to run cmd':
+        status=0
+        return output,status
     
     #move to build directory for configuration
     os.chdir(os.path.join(main_path,'build'))   
     #configure
+    output+='\nconfiguring....'
     config_flags=['--prefix=%s'%(os.path.join(main_path,'install')),'--with-momentum=GEV','--with-length=MM']
     cmd=' '.join([os.path.join(main_path,'src','./configure')]+config_flags)
     out,err=run_cmd(cmd)
-    print '*****************out**********:\n',out
-    print '\n****************err*********:\n',err
+    output+='*****************out**********:\n%s'%out
+    output+='\n****************err*********:\n%s'%err
+    if err=='unable to run cmd':
+        status=0
+        return output,status
     #make
+    output+='\nmake....'
     make_flags=['']
     cmd=' '.join(['make']+make_flags)
     out,err=run_cmd(cmd)#install command
-    print '*****************out**********:\n',out
-    print '\n****************err*********:\n',err
+    output+='*****************out**********:\n%s'%out
+    output+='\n****************err*********:\n%s'%err 
+    if err=='unable to run cmd':
+        status=0
+        return output,status
     #make install
+    output+='\nmake install....'
     make_flags=['install']
     cmd=' '.join(['make']+make_flags)
     out,err=run_cmd(cmd)#install command
-    print '*****************out**********:\n',out
-    print '\n****************err*********:\n',err
+    output+='*****************out**********:\n%s'%out
+    output+='\n****************err*********:\n%s'%err
+    if err=='unable to run cmd':
+        status=0
         
     return output,status    
     
