@@ -8,7 +8,10 @@ Basic metropolis-hastings algorithm
 
 import scipy as sp
 import alg_base as alg
-from scipy.linalg import det, inv
+try:
+    from scipy.linalg import det, inv
+except:
+    from numpy.linalg import det, inv    
 #State of the scan
 class state(alg.state):
     
@@ -25,8 +28,8 @@ class state(alg.state):
     
     #Gaussian Proposal distribution    
     def lnQ(self,X_i,X_f):
-        mu=sp.array([X_i.params[key] for key in X_i.sample_params])
-        x=sp.array([X_f.params[key] for key in X_f.sample_params])
+        mu=sp.array([X_i.params[key] for key in X_i.model_params])
+        x=sp.array([X_f.params[key] for key in X_f.model_params])
         return -0.5*sp.dot(sp.dot(sp.transpose(mu-x),inv(self.Q_cov)),(mu-x))
      
     #New sample point bsed on intitial point
@@ -84,9 +87,9 @@ class kernel(alg.kernel):
     #Method for proposing new point X_f given X_i
     def propose(self,X,state,chain):
         #Initialize new parameters
-        mu=sp.array([X.params[key] for key in X.sample_params])
+        mu=sp.array([X.params[key] for key in X.model_params])
         x=state.sample_Q(mu)
-        params=dict((X.sample_params[i],x[i]) for i in range(len(X.sample_params)))
+        params=dict((X.model_params[i],x[i]) for i in range(len(X.model_params)))
         #Add constants        
         params.update(self.constants)
         #Add functions

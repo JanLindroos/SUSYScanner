@@ -34,6 +34,9 @@ def init_run(args):
     import_opt='import '+module.rstrip('.py')+' as opt'    
     exec(import_opt)
     
+    #Add path to options file to opt
+    opt.options_path=os.path.join(os.path.abspath(input_path),module)  
+    
     #set up path if not specified in options
     if 'path' not in dir(opt):
         opt.path=os.path.abspath(input_path)
@@ -45,10 +48,15 @@ def init_run(args):
     exec('import alg.'+opt.alg+' as alg')
         
     #Add default print options if not specified
+    #Initialize dummy functions and constants if not present in model
+    if 'model_change' not in dir(opt):
+        opt.model_change={} 
+    if 'constants' not in dir(opt):
+        opt.constants={}   
+    if 'functions' not in dir(opt):
+        opt.functions={}
     if 'merge_files' not in dir(opt):
         opt.merge_files=False
-    if 'print_params' not in dir(opt):
-        opt.print_params=model.param_names[0:5]
     if 'print_level' not in dir(opt):
         opt.print_level=1
     if 'write_level' not in dir(opt):
@@ -83,6 +91,9 @@ def init_run(args):
     exec('from '+module.rstrip('.py')+' import model')
     model=init_model(opt,model)
     
+    if 'print_params' not in dir(opt):
+        opt.print_params=model.param_names[0:5]
+    
     #check print_params matches param_names after model updates
     new_print_params=[]
     for name in opt.print_params:
@@ -105,11 +116,13 @@ def init_model(opt,model):
         
     #Add accept attribute
     model.accept=True
+    #Add error attribute
+    model.error=0    
     
     return model
 
 #Sets up directories to be used    
-def init_dirs(opt,model):
+def master_init(opt,model):    
     #Delete run directory if it already exists
     if os.path.exists(model.datadirs['main']):
         shutil.rmtree(model.datadirs['main'])
@@ -119,6 +132,9 @@ def init_dirs(opt,model):
     dirkeys=[key for key in model.datadirs.keys() if key!='main']
     for key in dirkeys:       
         os.makedirs(model.datadirs[key])
+        
+    #Add option file to run dir
+    shutil.copy(opt.options_path,os.path.join(opt.path,opt.run_name))
     
     #Create tmp dir for each chain
     if os.path.exists('tmp'):
@@ -135,6 +151,10 @@ def init_dirs(opt,model):
                     shutil.copy(inputfile,os.path.join('tmp','tmp_%i'%i,os.path.split(inputfile)[1]))
                 if os.path.isdir(inputfile):
                     shutil.copytree(inputfile,os.path.join('tmp','tmp_%i'%i,os.path.split(inputfile)[1]))
+                    
+    #Initialize model if master_initialize is included     
+    if 'master_initialize' in dir(model):
+        model.master_initialize(opt)
         
     return
             

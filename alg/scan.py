@@ -22,6 +22,7 @@ import time
 
 # change some text
 def scan(rank,alg,model,opt,connection=None):
+    print 'inside scan'
     #Initialize random seed
     sp.random.seed(int(time.time())+rank)   
     #change directory
@@ -55,6 +56,7 @@ def scan(rank,alg,model,opt,connection=None):
     
     #Sample initial point
     init=True
+    print 'initializing'
     while init:
         params,modelid=kernel.initialize(state,chain)#Sample from initial distribution
         X_i=model(modelid,params)#Construct model from parameters
@@ -77,12 +79,16 @@ def scan(rank,alg,model,opt,connection=None):
                 X_i.accept=X_i.lnP>=opt.lnP_min
                         
         else:
+            print "Calculating X_i"
             X_i.calculate()
+            print "X_i.accept:%i X_i.lnP: %f"%(X_i.accept,X_i.lnP)
             if X_i.accept:
                 X_i.accept=X_i.lnP>=opt.lnP_min
+                print 'X_i accepted'
             
         #If accept update
         if X_i.accept:
+            print 'Stop initialization'
             init=False
             #chain.size+=1
             chain.accepted+=1
@@ -99,7 +105,8 @@ def scan(rank,alg,model,opt,connection=None):
         if 'finalize' in dir(X_i):
             X_i.finalize()
                     
-    #Loop while global and local state permits it   
+    #Loop while global and local state permits it
+    print 'Finished initializing'
     while state.continue_sampling and chain.continue_sampling:   
         #sample proposal
         params,modelid=kernel.propose(X_i,state,chain)
@@ -198,10 +205,12 @@ def scan(rank,alg,model,opt,connection=None):
             except:
                 state.continue_sampling=False
         
-        #Write last point 
+        #Write last point and print results
         if chain.continue_sampling==False or state.continue_sampling==False:
             writer.add(X_i)
             printer.print_model(X_i)
+            if rank==0:
+                io.print_finish(opt)
         
     #close file
     #print 'closing writer'

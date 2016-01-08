@@ -61,7 +61,7 @@ class model(object):
     obs_params=list(OrderedDict.fromkeys(sum([part_params[key] for key in parts],[])))
                                                           
     #Constraints: construct components of lnP****************************************************************************                  
-    constraints={part:[] for part in parts}
+    constraints=dict([(part,[]) for part in parts])
     #constraints['higgsbounds']+=[lambda pars: sp.log(int(pars['HB_excl']==0))]
     #mh0_mu,mh0_sigma=[125.5 , 1.7]
     #constraints['higgsbounds']+=[lambda pars: -(pars['m_h0']-mh0_mu)**2/(2*mh0_sigma**2)]
@@ -86,7 +86,7 @@ class model(object):
                 'prospino':os.path.join(sl.libpath,'src','cards','Pro2_subroutines'),
                 'delphes':os.path.join(sl.libpath,'src','cards','delcard_default.dat')}
 
-    #Initialization class method (performed by mother process only)
+    #Initialization class method (applies to all processes)
     @classmethod
     def initialize(cls,opt):
         #list of allowed model changes
@@ -115,13 +115,12 @@ class model(object):
         self.lnP=0
         #Set up error dictionary
         self.error=0
+        self.accept=True
         self.slhafile='%s.slha'%(self.modelid)
         self.mgcard='%s_mg.dat'%(self.modelid)
         self.hepmcfiles=['%s_%s.hepmc'%(self.modelid,i) for i in range(self.evgen['threads'])]
         self.profile='%s_pro.dat'%(self.modelid)
         self.rootfile='%s.root'%(self.modelid)
-        self.accept=True
-
         
     #clean up method
     def finalize(self):
