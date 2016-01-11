@@ -13,11 +13,11 @@ uniform random: Q
 
 """
 import scipy as sp
-import os,sys
+import os
 import lib.io_lib as io
 import lib.para_lib as prl
-from lib.prepost_lib import init_model
-import dill
+#from lib.prepost_lib import init_model
+#import dill
 import time
 
 # change some text

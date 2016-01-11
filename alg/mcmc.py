@@ -16,7 +16,7 @@ except:
 class state(alg.state):
     
     def __init__(self,rank,opt,model):
-        alg.state.__init__(self,rank,opt,model) 
+        alg.state.__init__(self,rank,opt,model)
         if 'Q_cov' in dir(opt):
             self.Q_cov=opt.Q_cov
         else:
