@@ -9,6 +9,7 @@ Usage:
 cmd: 
     make    - extracts, installs and tests specified tools (default all+check root)
     extract - only extracts the tools in the tool directory for manual installation
+    repack  - repack tool to src (only one tool at the time)
     test    - tests if specified tools are working properly
     clean   - uninstalls specified tools (default all tools, but not root & hepmc)
     help    - print documentation
@@ -147,7 +148,7 @@ else:
             sys.exit()
 
 #install default tools if mode is make and tools is empty
-if user_input['mode']in ['make','test'] and not user_input['tools']:
+if user_input['mode']in ['make','test','extract'] and not user_input['tools']:
     user_input['tools']+=['softsusy','susyhit','feynhiggs','higgsbounds','micromegas','pythia','delphes']
 
 #check if hepmc or root should be installed as well

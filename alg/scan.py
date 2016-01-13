@@ -22,7 +22,6 @@ import time
 
 # change some text
 def scan(rank,alg,model,opt,connection=None):
-    print 'inside scan'
     #Initialize random seed
     sp.random.seed(int(time.time())+rank)   
     #change directory
@@ -56,7 +55,7 @@ def scan(rank,alg,model,opt,connection=None):
     
     #Sample initial point
     init=True
-    print 'initializing'
+    #print 'initializing'
     while init:
         params,modelid=kernel.initialize(state,chain)#Sample from initial distribution
         X_i=model(modelid,params)#Construct model from parameters
@@ -79,16 +78,16 @@ def scan(rank,alg,model,opt,connection=None):
                 X_i.accept=X_i.lnP>=opt.lnP_min
                         
         else:
-            print "Calculating X_i"
+            #print "Calculating X_i"
             X_i.calculate()
-            print "X_i.accept:%i X_i.lnP: %f"%(X_i.accept,X_i.lnP)
+            #print "X_i.accept:%i X_i.lnP: %f"%(X_i.accept,X_i.lnP)
             if X_i.accept:
                 X_i.accept=X_i.lnP>=opt.lnP_min
-                print 'X_i accepted'
+                #print 'X_i accepted'
             
         #If accept update
         if X_i.accept:
-            print 'Stop initialization'
+            #print 'Stop initialization'
             init=False
             #chain.size+=1
             chain.accepted+=1
@@ -106,7 +105,6 @@ def scan(rank,alg,model,opt,connection=None):
             X_i.finalize()
                     
     #Loop while global and local state permits it
-    print 'Finished initializing'
     while state.continue_sampling and chain.continue_sampling:   
         #sample proposal
         params,modelid=kernel.propose(X_i,state,chain)
@@ -216,5 +214,4 @@ def scan(rank,alg,model,opt,connection=None):
     #print 'closing writer'
     writer.close()
     os.chdir(orgdir)
-    print "%i finished sampling"%(rank),chain.continue_sampling,state.continue_sampling
     

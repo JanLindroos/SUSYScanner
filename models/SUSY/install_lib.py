@@ -273,7 +273,14 @@ def install_pythia(options):
     
     #make pMSSM processes
     output+='\nmaking MG processes.\n'
-    os.chdir(os.path.join(main_path,'Processes_mssm'))
+    #copy include file to process folder
+    proc_path=os.path.join(main_path,'Processes_mssm')
+    if os.path.exists(os.path.join(main_path,'Makefile.inc')):
+        shutil.copy(os.path.join(main_path,'Makefile.inc'),os.path.join(proc_path,'Makefile.inc'))
+    else:
+        print 'Warning: unable to find and copy Makefile.inc'
+        
+    os.chdir(proc_path)
     make_flags=[]
     cmd=' '.join(['make']+make_flags)
     out,err=run_cmd(cmd)#install command
@@ -306,8 +313,7 @@ def install_pythia(options):
         return output,status
 
     #Set pythia environment variable
-    os.chdir(main_path)   
-    os.system('export PYTHIA8DATA=%s'%(os.path.join(main_path,'share','Pythia8','xmldoc')))    
+    os.chdir(main_path)     
     
     return output,status
     

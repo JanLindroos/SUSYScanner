@@ -15,7 +15,6 @@ Created on Mon Dec 29 15:54:18 2014
 @author: Jan Lindroos
 """
 import scipy as sp
-import itertools as it
 import alg_base as alg
 import lib.io_lib as io
 
