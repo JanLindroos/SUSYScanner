@@ -99,8 +99,8 @@ class printer(object):
 #                    print '%15s%s'%('%i mean_error:'%(i),std_str)
         if self.print_level>1:
             #print header
-            h_str=''.join(['%15s'%key for key in ['chain','modelid','weight','lnP']+self.print_params])
-            sys.stdout.write('\n'+h_str+'\n')
+            h_str=''.join(['%7s%7s%10s'%('accept','chain','error')]+['%15s'%key for key in ['modelid','weight','lnP']+self.print_params])
+            sys.stdout.write(h_str + '\n')
             
         
         return    
@@ -160,6 +160,7 @@ def read_params(filename,filetype,params=None,skip_header=0,skip_footer=0):
 
 #Print initial stuff about model    
 def print_init(opt):
+    
     print ' %s '%(os.path.split(os.getcwd())[1]).center(40,'*')
     print '\nModel: %s\nAlgorithm: %s\nMode: %s'%(opt.model,opt.alg,opt.mode)
     if isinstance(opt.scan_range,basestring):

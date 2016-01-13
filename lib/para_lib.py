@@ -7,7 +7,7 @@ Communication library which handles the communication between
 the chains
 """
 import lib.io_lib as io
-from lib.prepost_lib import init_dirs
+from lib.prepost_lib import master_init
 import time
 import os
 #MPI/multiprocessing shit
@@ -135,8 +135,7 @@ def launch(scan,alg,model,opt):
             #print headers
             io.print_init(opt)
             #Set up directories            
-            init_dirs(opt)
-            
+            master_init(opt)            
         
         #Wait for mother before starting
         comm.barrier()
@@ -155,10 +154,10 @@ def launch(scan,alg,model,opt):
         import multiprocessing as mp
         #impoer dill for proper pickling
         import dill
-        #print headers
+        #print headers and initialize run_log
         io.print_init(opt)
-        #set up dirs
-        init_dirs(opt,model)
+        #master initialize: Sets up folders, and performs model.master_init if it exists
+        master_init(opt,model)
         
         #queue for passing updates to master
         #Create Pipes for communication 
@@ -183,7 +182,7 @@ def launch(scan,alg,model,opt):
         for proc in processes:
             proc.join()
             
-        io.print_finish(opt)
+        
         #Check if output from different files should be merged
         if opt.merge_files:
             infiles=[os.path.join(opt.path,opt.run_name,'%s_%i.dat'%(opt.run_name,i)) for i in range(opt.chains)]

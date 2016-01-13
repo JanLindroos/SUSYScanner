@@ -13,11 +13,11 @@ uniform random: Q
 
 """
 import scipy as sp
-import os,sys
+import os
 import lib.io_lib as io
 import lib.para_lib as prl
-from lib.prepost_lib import init_model
-import dill
+#from lib.prepost_lib import init_model
+#import dill
 import time
 
 # change some text
@@ -55,6 +55,7 @@ def scan(rank,alg,model,opt,connection=None):
     
     #Sample initial point
     init=True
+    #print 'initializing'
     while init:
         params,modelid=kernel.initialize(state,chain)#Sample from initial distribution
         X_i=model(modelid,params)#Construct model from parameters
@@ -77,12 +78,16 @@ def scan(rank,alg,model,opt,connection=None):
                 X_i.accept=X_i.lnP>=opt.lnP_min
                         
         else:
+            #print "Calculating X_i"
             X_i.calculate()
+            #print "X_i.accept:%i X_i.lnP: %f"%(X_i.accept,X_i.lnP)
             if X_i.accept:
                 X_i.accept=X_i.lnP>=opt.lnP_min
+                #print 'X_i accepted'
             
         #If accept update
         if X_i.accept:
+            #print 'Stop initialization'
             init=False
             #chain.size+=1
             chain.accepted+=1
@@ -99,7 +104,7 @@ def scan(rank,alg,model,opt,connection=None):
         if 'finalize' in dir(X_i):
             X_i.finalize()
                     
-    #Loop while global and local state permits it   
+    #Loop while global and local state permits it
     while state.continue_sampling and chain.continue_sampling:   
         #sample proposal
         params,modelid=kernel.propose(X_i,state,chain)
@@ -198,14 +203,15 @@ def scan(rank,alg,model,opt,connection=None):
             except:
                 state.continue_sampling=False
         
-        #Write last point 
+        #Write last point and print results
         if chain.continue_sampling==False or state.continue_sampling==False:
             writer.add(X_i)
             printer.print_model(X_i)
+            if rank==0:
+                io.print_finish(opt)
         
     #close file
     #print 'closing writer'
     writer.close()
     os.chdir(orgdir)
-    print "%i finished sampling"%(rank),chain.continue_sampling,state.continue_sampling
     

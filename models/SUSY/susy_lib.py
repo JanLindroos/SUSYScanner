@@ -12,7 +12,6 @@ from slha_converter import convert_to_mg5card
 import multiprocessing
 
 run_method='proc_shell'
-
 #Get root path to SUSYScanner
 #root_path=os.path.join(os.getcwd().split('SUSYScanner')[0],'SUSYScanner')
 
@@ -48,6 +47,7 @@ def run_tool(cmd,mode='proc_shell',result_queue=None,tag=''):
             tag='_%s'%tag
         stderr=open('err%s.txt'%tag,'w+')
         stdout=open('out%s.txt'%tag,'w+')
+        
 
     tries=0
     while tries<=3:
@@ -594,21 +594,25 @@ def run_pythia(model):
     #t_init=time()
     processes=[]
     result_queue = multiprocessing.Queue()
+    #set PYTHIAXML PATH    
+    #print 'PYTHIA8DATA:',env['PYTHIA8DATA']
+
+    xmlpath=os.path.join(tool_paths['pythia'],'share','Pythia8','xmldoc')
+
     for thread in range(model.evgen['threads']):#single thread
-        nevt_i=nevt+int(thread<dnevt)    
-        rnd_seed=(int(time())+thread)%900000000
+        nevt_i=nevt+int(thread<dnevt)
+        rnd_seed=(int(time())+thread)%900000000       
         
-        opt=[model_card,str(model.evgen['ecm']),str(nevt_i),model.hepmcfiles[thread],pycard,str(rnd_seed)]
+        opt=[model_card,str(model.evgen['ecm']),str(nevt_i),model.hepmcfiles[thread],pycard,str(rnd_seed),xmlpath]
         cmd=[os.path.join(tool_paths['pythia'],'share','Pythia8','examples','./%s'%(pycmd))]+opt
         #out,err=run_tool(cmd,run_method)
-        
         p=multiprocessing.Process(target=run_tool, args=(cmd,'mp_proc_noshell',result_queue,str(thread)))
         p.start()
         processes.append(p)
        
     for p in processes:
         p.join()
-    
+        
         #Initialise Cross sections for thread
         LO_part=dict([(proc,sp.zeros(2)) for proc in procs])
         [outfile,errfile]=result_queue.get()

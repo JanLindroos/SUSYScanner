@@ -14,8 +14,8 @@ merge_files=True#Option to merge dat files (default false)
 alg='nonrand'
 scan_range='/home/lindroos/ATLAS_comparison/ATLASpMSSM_binoII.dat'#If data points is to be drawn from file
 mode='multiprocessing'#'multiprocessing'#run mode, multiprocessing for single machine, MPI for cluster
-chains=5#number of cpus to use in multiprocessing (and for local multiprocessing when MPI is used)
-sample_size=10#Determine maximal number of models in the sample
+chains=5#number of chains ran in parallel, for number of threads per chain, see threads model.evgen['threads']
+sample_size=20#Determine maximal number of models in the sample
 
 #Target distrinution
 sequential=True#Calculate likelihood sequentially lnP=sum(lnP_i)
@@ -24,13 +24,12 @@ lnP_min=-sp.inf#-sp.inf#Minimum allowed
 #scan options
 batch_size=50#batch size, determines analysis interval for the chains
 
-
 #Make changes to model
 model_change={}
 #change parts of SUSY calculations included
-model_change['parts']=['softsusy','susyhit','higgsbounds','micromegas','pythia','prospino']
+model_change['parts']=['softsusy','susyhit','higgsbounds','micromegas','pythia','delphes','prospino']
 model_change['keep_files']={'slha':True,'mgcard':False,'hepmc':True,'root':True}
-model_change['evgen']={'mode':'SUSYMG','nevt':10000,'ecm':8000.,'threads':4,'nlo':1}
+model_change['evgen']={'mode':'SUSYMG','nevt':10000,'ecm':8000.,'threads':8,'nlo':1}
 
 #Import constraints from file constraints.py
 cpath='constraints.py'#Path to constraints

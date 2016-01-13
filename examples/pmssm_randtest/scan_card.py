@@ -8,7 +8,7 @@ import scipy as sp
 import os,sys
 
 
-run_name='ATLAS_repro_100models'
+run_name='ATLAS_repro_1000models'
 model='models/SUSY/pMSSM_model.py'#model to run over, a model is defined by a set of parameters and a target distribution
 fileformat='dat'
 alg='rand'
@@ -69,6 +69,6 @@ model_change['evgen_threads']=10#number of threads for evt generation (default 1
 #******************************************************************************
 
 #Print options
-print_level=3#0:None,1:State,2:State+accepted, 3:State+accepted+rejected
+print_level=2#0:None,1:State,2:State+accepted, 3:State+accepted+rejected
 print_params=['HB_excl','LEP','Gamma_Z','m_h0','Oh2','bsg','Bsmumu','drho']                                                                            
                                                                                                                                      
