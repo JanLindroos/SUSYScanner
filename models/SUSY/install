@@ -26,6 +26,7 @@ dependencies:
      hepmc       - Fileformat for storing events, installed with pythia
 
 opt:
+     -debug              - Gives complete output from all steps in the compilation procedure
      -hex                - Uses gnus cray compiler wrappers to install (for hexagon installation)
      -hexopt             - Compiles with recommended optimization flags for cray
      -F77C=[compiler]    - Set fortran 77 compiler (Currently not working)
@@ -96,13 +97,13 @@ install_path=os.path.join(main_path,'tools')
 #Input dictionary
 inputs={'mode':['make','clean','help','extract','repack','test'],
         'tools':['root','hepmc','softsusy','susyhit','feynhiggs','higgsbounds','micromegas','pythia','delphes','madgraph','prospino'],
-        'options':['-hex','-hexopt','-F77C','-F90C','-CC','-FHINCLUDE','-FHLIBS','-HEPMC','-withroot','-all','-keep_test']}
+        'options':['-debug','-hex','-hexopt','-F77C','-F90C','-CC','-FHINCLUDE','-FHLIBS','-HEPMC','-withroot','-all','-keep_test']}
 
 #Initialize user input
 #defaul higgs and hepmc paths
 higgs_path=os.path.join(install_path,'feynhiggs',source_files['feynhiggs'].rstrip('.tar.gz'),'install')
 hepmc_path=os.path.join(install_path,'hepmc',source_files['hepmc'].rstrip('.tar.gz'),'install')      
-user_input={'mode':'make','tools':[],'options':{'withroot':0,'hex':0,'hexopt':0,'all':0,'keep_test':0,
+user_input={'mode':'make','tools':[],'options':{'debug':0,'withroot':0,'hex':0,'hexopt':0,'all':0,'keep_test':0,
             'F77C':F77C,'F90C':F90C,'CC':CC,
             'FHINCLUDE':os.path.join(higgs_path,'include'),
             'FHLIBS':os.path.join(higgs_path,'lib64'),
@@ -124,7 +125,7 @@ else:
         #check if arg is an option
         elif arg[0]=='-':
             if arg.split('=')[0] in inputs['options']:
-                if arg in ['-hex','-hexopt','-withroot','-all','-keep_test']:
+                if arg in ['-debug','-hex','-hexopt','-withroot','-all','-keep_test']:
                     user_input['options'][arg[1::]]=1
                 else:
                     user_input['options'][arg[1::].split('=')[0]]=arg[1::].split('=')[1]    
@@ -325,7 +326,11 @@ if user_input['mode'] in ['make','extract','test']:
             if test_model.error==0:
                 test_results[tool]='success'
                 write_log('%s finished with no errors:'%(tool))
+                if user_input['options']['debug']:
+                    write_log('install output:\n%s '%(output))     
                 write_log(il.test_results(test_params,bench_params))
+                
+                    
             else:
                 test_results[tool]='failed'
                 write_log('%s test failed with error %i\ninstall output:\n%s '%(tool,test_model.error,output))    

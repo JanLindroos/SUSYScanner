@@ -173,8 +173,12 @@ def install_feynhiggs(options):
 def install_higgsbounds(options):
     output,status=['',1]
     #Set compiler flags and location of feynhiggs
+#    flags={'F90C':options['F90C'],'F77C':options['F77C'],
+#    'F90FLAGS':'-fcheck=bounds -ffixed-line-length-none',
+#    'FHINCLUDE':'-I'+options['FHINCLUDE'],
+#    'FHLIBS':'-L'+options['FHLIBS']+' -lFH'}
     flags={'F90C':options['F90C'],'F77C':options['F77C'],
-    'F90FLAGS':'-fcheck=bounds -ffixed-line-length-none',
+    'F90FLAGS':'-ffixed-line-length-none',
     'FHINCLUDE':'-I'+options['FHINCLUDE'],
     'FHLIBS':'-L'+options['FHLIBS']+' -lFH'}
     output+='set compilers and paths for feynhiggs:\n%s'%('\n'.join(['%s=%s'%(key,flags[key]) for key in flags.keys()]))
