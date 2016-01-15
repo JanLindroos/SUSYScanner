@@ -12,7 +12,7 @@ parts=['softsusy','susyhit','higgsbounds','micromegas','pythia','delphes','prosp
 #import constraints
                                                       
 #Constraints: construct components of lnP****************************************************************************                  
-constraints={part:[] for part in parts}
+constraints=dict([(part,[]) for part in parts])
 #softsusy: Gamma_Z, SUSY masses
 GammaZ_max=2*10**(-3)
 constraints['softsusy']+=[lambda pars: sp.log(int(pars['Gamma_Z']<GammaZ_max))]

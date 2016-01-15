@@ -13,7 +13,7 @@ parts=['softsusy','susyhit','higgsbounds','micromegas','pythia','delphes','prosp
 #import constraints
                                                       
 #Constraints: construct components of lnP****************************************************************************                  
-constraints={part:[] for part in parts}
+constraints=dict([(part,[]) for part in parts])
 #softsusy: 'Gamma_Z', SUSY masses
 #GammaZ (Calculated at Tree level)
 GammaZ_max=2*10**(-3)
