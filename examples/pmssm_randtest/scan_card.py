@@ -8,7 +8,7 @@ import scipy as sp
 import os,sys
 
 
-run_name='ATLAS_repro_1000models'
+run_name='ATLAS_repro_100models'
 model='models/SUSY/pMSSM_model.py'#model to run over, a model is defined by a set of parameters and a target distribution
 fileformat='dat'
 alg='rand'

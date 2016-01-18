@@ -12,7 +12,7 @@ parts=['softsusy','susyhit','feynhiggs','higgsbounds','micromegas','pythia','del
 #import constraints
                                                       
 #Constraints: construct components of lnP****************************************************************************                  
-constraints={part:[] for part in parts}
+constraints=dict([(part,[]) for part in parts])
 
 constraints['higgsbounds']+=[lambda pars: sp.log(int(pars['HB_excl']==0))]
 mh0_mu,mh0_sigma=[125.5 , 1.7]
