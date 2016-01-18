@@ -153,7 +153,7 @@ def launch(scan,alg,model,opt):
     if opt.mode=='multiprocessing':
         import multiprocessing as mp
         #impoer dill for proper pickling
-        import dill
+        #import dill
         #print headers and initialize run_log
         io.print_init(opt)
         #master initialize: Sets up folders, and performs model.master_init if it exists
