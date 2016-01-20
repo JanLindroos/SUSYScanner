@@ -96,7 +96,7 @@ class chain(object):
         self.accepted=0
         self.lnP_max=-sp.inf
         self.params_bf=None
-        self.batch_weight=0#Currenr batch weight
+        self.batch_weight=0#Current batch weight
         self.batch_sum=sp.zeros(len(self.param_names))#Current batch sum
         self.batch_means=[]#list of batch means
         self.mean=sp.nan*sp.ones(len(self.param_names))
