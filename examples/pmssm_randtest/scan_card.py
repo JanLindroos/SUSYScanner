@@ -8,7 +8,7 @@ import scipy as sp
 import os,sys
 
 
-run_name='ATLAS_repro_1000models'
+run_name='ATLAS_repro_10models'
 model='models/SUSY/pMSSM_model.py'#model to run over, a model is defined by a set of parameters and a target distribution
 fileformat='dat'
 alg='rand'
@@ -49,23 +49,19 @@ sequential=True#use sequentially lnP=sum(lnP_i) only calculate while constraints
 lnP_min=-1e10#Minimum allowed (-sp.inf means accept everything)
 
 #scan options
-batch_size=100#batch size, determines analysis interval for the chains
+batch_size=10#batch size, determines analysis interval for the chains
 
 #Make changes to model*********************************************************
 model_change={}
 #change parts of SUSY calculations included
 model_change['parts']=['softsusy','susyhit','higgsbounds','micromegas']
 #Import constraints from file constraints.py
-cpath='ATLAS_pMSSM_constraints.py'#Path to constraints
+cpath=os.path.join(os.path.dirname(__file__),'ATLAS_pMSSM_constraints.py')#Path to constraints
 [cpath,cmodule]=os.path.split(cpath)
-sys.path.append(os.path.abspath(cpath))
+sys.path.append(cpath)
 exec('from '+cmodule.rstrip('.py')+' import constraints')
 model_change['constraints']=constraints
-#LHC EvGen
-model_change['evgen_ecm']=14000# [GeV] LHC center of mass energy (default 8000)
-model_change['evgen_nevt']=10000# Number of LHC events to generate (default 10000)
-model_change['evgen_threads']=10#number of threads for evt generation (default 1, recommended chains*threads<=cpus available)
-#model_change['Analysis']=#Still need to figure out what these are
+
 #******************************************************************************
 
 #Print options

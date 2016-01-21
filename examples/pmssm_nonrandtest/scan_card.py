@@ -12,7 +12,7 @@ fileformat='dat'#Determins fileformat for out files (only dat available at the m
 merge_files=True#Option to merge dat files (default false)
 
 alg='nonrand'
-scan_range='ATLASpMSSM_bino_20models.dat'#If data points is to be drawn from file
+scan_range=os.path.join(os.path.dirname(__file__),'pMSSM_bino_20models.dat')#If data points is to be drawn from file
 mode='multiprocessing'#'multiprocessing'#run mode, multiprocessing for single machine, MPI for cluster
 chains=5#number of chains ran in parallel, for number of threads per chain, see threads model.evgen['threads']
 sample_size=20#Determine maximal number of models in the sample
@@ -28,13 +28,14 @@ batch_size=50#batch size, determines analysis interval for the chains
 model_change={}
 #change parts of SUSY calculations included
 model_change['parts']=['softsusy','susyhit','higgsbounds','micromegas','pythia','delphes','prospino']
-model_change['keep_files']={'slha':False,'mgcard':False,'hepmc':True,'root':False}
+model_change['keep_files']={'slha':False,'mgcard':False,'hepmc':False,'root':False}
 model_change['evgen']={'mode':'SUSYMG','nevt':10000,'ecm':8000.,'threads':8,'nlo':1}
 
-#Import constraints from file constraints.py
-cpath='constraints.py'#Path to constraints
+#Import constraints from file constraints.py in same directory
+cpath=os.path.join(os.path.dirname(__file__),'constraints.py')#Path to constraints
 [cpath,cmodule]=os.path.split(cpath)
-sys.path.append(os.path.abspath(cpath))
+sys.path.append(cpath)
+
 exec('from '+cmodule.rstrip('.py')+' import constraints')
 model_change['constraints']=constraints
 

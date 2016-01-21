@@ -44,6 +44,7 @@ constraints['micromegas']+=[lambda pars: sp.log(int(pars['bsg']>bsg_range[0] and
 #a_mu (union of 3sigma exp and theory, no ref)
 amu_range=[-1.77*10**(-9),4.38*10**(-9)]
 constraints['micromegas']+=[lambda pars: sp.log(int(pars['a_mu']>amu_range[0] and pars['a_mu']<amu_range[1]))]
-#LUX limit (4*LUX lim on relic density corrected spin-independent Xenon (N=124, A=54) cs)
-LUX_lim=pickle.load(open(os.path.join(os.path.dirname(os.path.realpath(__file__)),'LUX_lim.pickle'),'rb'))
+#LUX limit (4*LUX lim on relic density corrected spin-independent Xenon (N=124, A=54) cs
+LUX_path=os.path.join(os.path.dirname(os.path.realpath(__file__)),'LUX_lim.pickle')
+LUX_lim=pickle.load(open(LUX_path,'rb'))
 constraints['micromegas']+=[lambda pars: sp.log(int(pars['Oh2']/float(0.1188)*(54/float(124)*pars['sigma_pSI']+70/float(124)*pars['sigma_nSI'])<4*LUX_lim(pars['m_Neu1'])))]

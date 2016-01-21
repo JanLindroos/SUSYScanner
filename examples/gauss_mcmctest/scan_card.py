@@ -5,13 +5,13 @@ Created on Sun Jan 04 16:38:17 2015
 Default Scan Card
 """
 import scipy as sp
-import sys
+import sys,os
 import cPickle as pickle
 
 alg='mcmc'
 mode='multiprocessing'#run mode, multiprocessing for single machine, MPI for cluster
 chains=10#number of cpus to use in multiprocessing (and for local multiprocessing when MPI is used)
-sample_size=10000#Number of likelihood evaluations (after initialization)
+sample_size=100000#Number of likelihood evaluations (after initialization)
 fileformat='dat'
 merge_files=True
 
@@ -27,7 +27,7 @@ model='models/gaussian_mixture/model.py'#model to run over, a model is defined b
 # sigma=0.1#Normalized variance, float or array with dim of parameter space
 # dist_vars=gen_dist('gaussian',scan_range,k,sigma,sym=False,uncorr=False)
 
-dist_path='dist_vars.pickle'
+dist_path=os.path.join(os.path.dirname(__file__),'dist_vars.pickle')
 dist_vars=pickle.load(open(dist_path,'rb'))
 model_change={'dist_vars':dist_vars}
 
