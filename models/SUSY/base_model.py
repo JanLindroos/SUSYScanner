@@ -221,7 +221,7 @@ class model(object):
         if 'prospino' in part:
             self=sl.run_prospino(self)
             
-        #Calculate likelihood components related to tool               
+        #Calculate likelihood components related to tool		
         for constraint in self.constraints[part]:
             try:
                 self.lnP+=constraint(self.params)

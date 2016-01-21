@@ -11,7 +11,7 @@ import cPickle as pickle
 alg='mcmc'
 mode='multiprocessing'#run mode, multiprocessing for single machine, MPI for cluster
 chains=10#number of cpus to use in multiprocessing (and for local multiprocessing when MPI is used)
-sample_size=1000000#Number of likelihood evaluations (after initialization)
+sample_size=10000#Number of likelihood evaluations (after initialization)
 fileformat='dat'
 merge_files=True
 
@@ -27,7 +27,7 @@ model='models/gaussian_mixture/model.py'#model to run over, a model is defined b
 # sigma=0.1#Normalized variance, float or array with dim of parameter space
 # dist_vars=gen_dist('gaussian',scan_range,k,sigma,sym=False,uncorr=False)
 
-dist_path='/home/lindroos/SUSYScanner/SUSY_runs/gauss_randtest/gaussian_rand_D3_k3_N1000000/dist_vars.pickle'
+dist_path='dist_vars.pickle'
 dist_vars=pickle.load(open(dist_path,'rb'))
 model_change={'dist_vars':dist_vars}
 
@@ -39,6 +39,6 @@ sequential=False#Target sequentially lnP=sum(lnP_i)
 lnP_min=-10#-sp.inf#Minimum allowed
 
 #scan options
-batch_size=1000#batch size, determines analysis interval for the chains
+batch_size=500#batch size, determines analysis interval for the chains
 #print options
 print_level=1

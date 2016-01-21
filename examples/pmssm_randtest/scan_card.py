@@ -8,14 +8,14 @@ import scipy as sp
 import os,sys
 
 
-run_name='ATLAS_repro_100models'
+run_name='ATLAS_repro_1000models'
 model='models/SUSY/pMSSM_model.py'#model to run over, a model is defined by a set of parameters and a target distribution
 fileformat='dat'
 alg='rand'
 mode='multiprocessing'#'multiprocessing'#run mode, multiprocessing for single machine, MPI for cluster
 chains=10#number of cpus to use in multiprocessing (and for local multiprocessing when MPI is used)
 
-sample_size=100#requested sample size
+sample_size=10#requested sample size
 
 #define Parameters
 #Scan parameters
@@ -45,7 +45,7 @@ functions['mmuR']=lambda pars: pars['meR']
 constants={}
 
 #Target distrinution
-sequential=False#use sequentially lnP=sum(lnP_i) only calculate while constraints are fullfilled
+sequential=True#use sequentially lnP=sum(lnP_i) only calculate while constraints are fullfilled
 lnP_min=-1e10#Minimum allowed (-sp.inf means accept everything)
 
 #scan options
