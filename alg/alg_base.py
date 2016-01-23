@@ -20,19 +20,21 @@ class state(object):
         
         #Properties of state       
         self.continue_sampling=True#Global sampling state
-        self.lnP_max=-sp.inf#Empty arrays giving the best fit for each chain
+        self.lnP_bf=-sp.inf#Empty arrays giving the best fit for each chain
+        self.params_bf=dict([(key,sp.nan) for key in self.param_names])#Global mean
         self.size=0#Number of likelihood evaluations
         self.accept=0#Number of accepted models
         self.mean=dict([(key,sp.nan) for key in self.param_names])#Global mean
         self.mc_error=dict([(key,sp.nan) for key in self.param_names])#Standard mc error
         
         #Properties of chains
-        self.chains={'continue_sampling':sp.ones(opt.chains)}#Sampling state of chains
+        self.chains={'rank':sp.nan*sp.ones(opt.chains)}
+        self.chains['continue_sampling']=sp.ones(opt.chains)#Sampling state of chains
         self.chains['size']=sp.zeros(opt.chains)#Number of likelihood evaluations by chain
         self.chains['accept']=sp.zeros(opt.chains)#Number of accepted points by chain
         self.chains['mean']=dict([(key,sp.nan*sp.ones(opt.chains)) for key in self.param_names])#total mean for each chain
         self.chains['mc_error']=dict([(key,sp.nan*sp.ones(opt.chains)) for key in self.param_names])#batch means estimated error http://arxiv.org/abs/math/0601446
-        self.chains['weight']=dict([(key,sp.nan*sp.ones(opt.chains)) for key in self.param_names])#total weights of chains
+        self.chains['weight']=sp.nan*sp.ones(opt.chains)#total weights of chains
         self.chains['lnP_bf']=-sp.inf*sp.ones(opt.chains)#chain best fit likelihoods
         self.chains['params_bf']=[dict([(key,sp.nan) for key in self.param_names]) for i in range(opt.chains)]#chain best fit models
         self.chain_keys=self.chains.keys()#List of chain data to be sent to state
@@ -42,12 +44,13 @@ class state(object):
         #Loop over chains in update
         for chain_update in chain_updates:
             for key in self.chain_keys:
-                self.chains[key][chain.rank]=chain_update[key]
+                print 'chain rank:',chain_update['rank']
+                self.chains[key][chain_update['rank']]=chain_update[key]
             
-            #Update global lnP_max and best fit point
-            if chain.lnP_max>self.lnP_max:
-                self.lnP_bf=chain.lnP_bf
-                self.params_bf=chain.params_bf
+                #Update global lnP_max and best fit point
+                if chain_update['lnP_bf']>self.lnP_bf:
+                    self.lnP_bf=chain_update['lnP_bf']
+                    self.params_bf=chain_update['params_bf']
     
         
         #Update Global statistics
@@ -56,9 +59,10 @@ class state(object):
         self.weight=sp.sum(self.chains['weight'])
         for key in self.param_names:
             #combine chain means
+        
             self.mean[key]=sp.sum(self.chains['weight']*self.chains['mean'][key])/float(self.weight)
             #Add mc errors in (quadrature assuming no correlation)
-            self.mc_error[key]=sp.sqrt(sp.sum(self.chains['weight']*self.chains['mc_error'])/self.weight)
+            self.mc_error[key]=sp.sqrt(sp.sum(self.chains['weight']*self.chains['mc_error'][key])/self.weight)
     
         #check sampling state: terminate if total size exeeds requested sample size or all chains done
         if self.size>=self.sample_size or not self.chains['continue_sampling'].any():
@@ -100,7 +104,7 @@ class chain(object):
         #Initialize batch after update
         if self.size%self.batch_size==0 and self.size>0:
             self.send=False
-            self.updates=dict([(key,sp.nan) for key in state.chain_keys])
+            self.updates=dict([(key,sp.nan) for key in self.updates.keys()])
             self.batch['data']['params']=dict([(key,sp.array([])) for key in self.param_names])#reset dictionary
             self.batch['data']['weight']=sp.array([])
          
@@ -134,13 +138,20 @@ class chain(object):
                     self.mc_error[key]=stat.mc_error(self.mean,self.batch['mean'][key],self.batch['weight'])
                 
                 #Fill updates for sending
-                self.updates=dict([(key,getattr(self,key)) for key in state.chain_keys])
+                self.updates=dict([(key,getattr(self,key)) for key in self.updates.keys()])
+                print self.updates
                 #Set send status to true    
                 self.send=True
+                
+                #Final sample size requested
+                if self.size>=self.sample_size:
+                    self.continue_sampling=False
 
         if self.size>=self.sample_size:#Final sample size requested
             print 'Worker %i has reached max size, sampling stopped'%(self.rank)
             self.continue_sampling=False
+            self.updates=dict([(key,getattr(self,key)) for key in self.updates.keys()])
+            print self.updates
             self.send=True
 
 #random scan kernel for creating the chain

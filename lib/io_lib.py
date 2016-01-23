@@ -73,22 +73,19 @@ class printer(object):
     def print_state(self,state):
         #Set up parameters to print
         if self.print_level>0:
-            i_max=sp.argmax(state.lnP_max)
-            print '\n%s: %i of %i models accepted (%4.1f %%), global best fit point:'%(time.strftime("%Y-%m-%d %H:%M:%S"),state.accepted,state.stop_size,100*state.accepted/float(state.sample_size))
+            i_max=sp.argmax(state.lnP_bf)
+            print '\n%s: %i of %i models sampled (%4.1f %% accepted), global best fit point:'%(time.strftime("%Y-%m-%d %H:%M:%S"),state.size,state.sample_size,100*state.accept/float(state.size))
             
             #Print global best fit and means
             
             h_str=''.join(['%15s'%key for key in ['','chain','lnP_max']+self.print_params])
-            d_str=''.join(['%15i'%i_max]+['%15.6e'%value for value in [state.lnP_max[i_max]]+[state.params_bf[i_max][name] for name in self.print_params]])
+            d_str=''.join(['%15i'%i_max]+['%15.6e'%value for value in [state.lnP_bf]+[state.params_bf[name] for name in self.print_params]])
             print '%s\n%15s%s'%(h_str,'best fit:',d_str)
         
-            imap=[state.params_bf[i_max].keys().index(name) for name in self.print_params]
-        
-            #print 'print:',state.mean
-            mu_str=''.join(['%15s'%'***','%15s'%'***']+['%15.6e'%state.mean[i] for i in imap])
+            mu_str=''.join(['%15s'%'***','%15s'%'***']+['%15.6e'%state.mean[key] for key in self.print_params])
             print '%15s%s'%('mean:',mu_str)
-            std_str=''.join(['%15s'%'***','%15s'%'***']+['%15.6e'%state.mean_error[i] for i in imap])
-            print '%15s%s'%('mean_error:',std_str)
+            std_str=''.join(['%15s'%'***','%15s'%'***']+['%15.6e'%state.mc_error[key] for key in self.print_params])
+            print '%15s%s'%('mc error:',std_str)
             
 #            if len(state.chain_means)>1:       
 #                print 'chains:'

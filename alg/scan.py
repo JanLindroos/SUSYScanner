@@ -154,6 +154,7 @@ def scan(rank,alg,model,opt,connection=None):
         #Send state if send=True
         if chain.send:
             #No need to send to itself, just update state directly
+            print 'sending data:',rank,chain.send
             if rank==0:
                 updates+=[chain.updates]
             #Send updated chain state to master
@@ -165,17 +166,13 @@ def scan(rank,alg,model,opt,connection=None):
             while True:
                 updates+=comm.master_check()
                 #Master: update global state
-                if len(updates)>0:
+                if len(updates)==opt.chains:
                     state.update(updates)
                     updates=[]
                 
                     #Send updated state to workerss
-                    comm.send_state(state)
-                    
-                    #only print state if all chains have reached batch size, ignore master (which is slower)
-                    if all(state.chains['size'][1:][state.chains['continue_sampling'][1:]==1]>=state.N_prog):
-                        state.N_prog+=state.batch_size    
-                        printer.print_state(state)
+                    comm.send_state(state)    
+                    printer.print_state(state)
                     
                 #If master is finished before worker then wait
                 if chain.continue_sampling==False and state.continue_sampling==True:
