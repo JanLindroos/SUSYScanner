@@ -116,7 +116,7 @@ class chain(object):
         
             #add accepted points to batch data (rejected models always have 0 weight)
             sp.append(self.batch['data']['weight'],X.weight)
-            for key in self.batch.keys():
+            for key in X.params.keys():
                 sp.append(self.batch['data']['params'][key],X.params[key])
                     
         #Update at each batch length
