@@ -14,11 +14,8 @@ from alg.scan import scan
 if __name__=='__main__':
     #let all workers parse user provided options
     alg,model,opt=init_run(sys.argv)
-    print 'after init_run'
+    
     #Launch parallell scan based on options
-    #opt='hello'
-    print 'before launch'
-    print dir(model)
     prl.launch(scan,alg,model,opt)
 
     #Clean up after run, empty tmp dir etc

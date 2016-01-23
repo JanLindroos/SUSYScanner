@@ -16,14 +16,10 @@ import scipy as sp
 import os
 import lib.io_lib as io
 import lib.para_lib as prl
-#from lib.prepost_lib import init_model
-#import dill
 import time
 
 # change some text
 def scan(rank,alg,model,opt,connection=None):
-    print 'inside scan'
-    print dir(model)
     #Initialize random seed
     sp.random.seed(int(time.time())+rank)   
     #change to temporary working directory
