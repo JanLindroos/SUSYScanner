@@ -24,9 +24,11 @@ import time
 def scan(rank,alg,model,opt,connection=None):
     #Initialize random seed
     sp.random.seed(int(time.time())+rank)   
-    #change directory
+    #change to temporary working directory
     orgdir=os.getcwd()
     os.chdir(os.path.join('tmp','tmp_%i'%rank))
+    
+    #Setup communicator
     comm=prl.communicate(rank,opt,connection) 
     #Initialize Markov chain kernel and markov chain   
     kernel=alg.kernel(rank,opt)
@@ -34,7 +36,10 @@ def scan(rank,alg,model,opt,connection=None):
     state=alg.state(rank,opt,model)
 
     if rank==0:
-        comm.send_state(state)         
+        #Sync states to master state
+        comm.send_state(state)
+        #initialize list of chain updates
+        updates=[]        
     else:
         state=comm.worker_check(state,blocked=True)
    
@@ -42,10 +47,7 @@ def scan(rank,alg,model,opt,connection=None):
     chain=alg.chain(rank,opt,model,state)
     #Set up writer and printer
     writer=io.writer(rank,opt)
-    printer=io.printer(rank,opt)
-    
-    if rank==0:
-        updates=[]#initialize list of chain updates  
+    printer=io.printer(rank,opt)          
     
     #check if model has sequantial target distribution
     if 'parts' in dir(model):
@@ -53,13 +55,13 @@ def scan(rank,alg,model,opt,connection=None):
     else:
         partial_lnP=False
     
-    #Sample initial point
+    #Initialize scan according to alg
     init=True
-    #print 'initializing'
     while init:
+        #sample initial parameters
         params,modelid=kernel.initialize(state,chain)#Sample from initial distribution
-        X_i=model(modelid,params)#Construct model from parameters
-        chain.size+=1
+        #Construct model from parameters
+        X_i=model(modelid,params)
         
         #Check if likelihood should be calculated sequentially
         if partial_lnP:                                  
@@ -76,36 +78,29 @@ def scan(rank,alg,model,opt,connection=None):
             
             if not opt.sequential and X_i.accept:
                 X_i.accept=X_i.lnP>=opt.lnP_min
-                        
+        
+        #If not simply calculate likelihood            
         else:
-            #print "Calculating X_i"
             X_i.calculate()
-            #print "X_i.accept:%i X_i.lnP: %f"%(X_i.accept,X_i.lnP)
             if X_i.accept:
                 X_i.accept=X_i.lnP>=opt.lnP_min
-                #print 'X_i accepted'
             
         #If accept update
         if X_i.accept:
-            #print 'Stop initialization'
+            #Set init flag
             init=False
-            #chain.size+=1
-            chain.accepted+=1
             #Assign initial weight, differs for different algorithms
             kernel.weight(X_i)
-            if X_i.lnP>chain.lnP_max:
-                chain.lnP_max=X_i.lnP
-                chain.params_bf=X_i.params
+            chain.update(X_i)
         else:
             printer.print_model(X_i)
-                        
-            
+                          
         #finalize model if method exists
         if 'finalize' in dir(X_i):
             X_i.finalize()
                     
     #Loop while global and local state permits it
-    while state.continue_sampling and chain.continue_sampling:   
+    while state.continue_sampling and chain.continue_sampling:
         #sample proposal
         params,modelid=kernel.propose(X_i,state,chain)
         X_f=model(modelid,params)        
@@ -140,14 +135,7 @@ def scan(rank,alg,model,opt,connection=None):
         
         
         #If accept update
-        if X_f.accept:
-#            chain.accepted+=1
-#            chain.batch_sum+=X_i.weight*sp.array(X_i.params.values())
-#            chain.batch_weight+=X_i.weight
-#            if X_i.lnP>chain.lnP_max:
-#                chain.lnP_max=X_i.lnP
-#                chain.params_bf=X_i.params
-            
+        if X_f.accept:            
             #Write data to file and screen        
             writer.add(X_i)
             printer.print_model(X_i)
@@ -181,13 +169,13 @@ def scan(rank,alg,model,opt,connection=None):
                 #Master: update global state
                 if len(updates)>0:
                     state.update(updates)
-                    updates=[]#new empty updates list
+                    updates=[]
                 
                     #Send updated state to workerss
                     comm.send_state(state)
                     
                     #only print state if all chains have reached batch size, ignore master (which is slower)
-                    if all(state.chain_sizes[1:][state.chain_status[1:]==1]>=state.N_prog):
+                    if all(state.chains['size'][1:][state.chains['continue_sampling'][1:]==1]>=state.N_prog):
                         state.N_prog+=state.batch_size    
                         printer.print_state(state)
                     
