@@ -101,8 +101,8 @@ class chain(object):
         if self.size%self.batch_size==0 and self.size>0:
             self.send=False
             self.updates=dict([(key,sp.nan) for key in state.chain_keys])
-            self.batch['params']=dict([(key,sp.array([])) for key in self.param_names])#reset dictionary
-            self.batch['weight']=sp.array([])
+            self.batch['data']['params']=dict([(key,sp.array([])) for key in self.param_names])#reset dictionary
+            self.batch['data']['weight']=sp.array([])
          
         #Update number of likelihood evaluations
         self.size+=1
