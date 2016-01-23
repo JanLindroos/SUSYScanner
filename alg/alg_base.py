@@ -90,7 +90,7 @@ class chain(object):
         self.updates=dict([(key,sp.nan) for key in state.chain_keys])#Attributes to be sent to state
 
         #Properties of current batch
-        self.batch={'data':dict([(key,sp.array([])) for key in self.param_names])}#data in current batch (only models with non-zero weight stored (accepted))
+        self.batch={'data':{'params':dict([(key,sp.array([])) for key in self.param_names])}}#data in current batch (only models with non-zero weight stored (accepted))
         self.batch['data']['weight']=sp.array([])#weights of points in current batch (needed for statistics)
         self.batch['mean']=dict([(key,sp.array([])) for key in self.param_names])#batch means
         self.batch['weight']=dict([(key,sp.array([])) for key in self.param_names])#batch weights
