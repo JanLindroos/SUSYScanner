@@ -110,8 +110,6 @@ def scan(rank,alg,model,opt,connection=None):
         params,modelid=kernel.propose(X_i,state,chain)
         X_f=model(modelid,params)        
         
-        chain.size+=1
-        
         #generate random number for checking, dummyfor non-mcmc 
         u=sp.rand()        
         #Check if likelihood should be calculated sequentially
@@ -153,7 +151,7 @@ def scan(rank,alg,model,opt,connection=None):
             #Write data to file and screen        
             writer.add(X_i)
             printer.print_model(X_i)
-            #Put X_i in chain according to alg
+            #Update chain
             chain.update(X_i)
             #Move to new point
             X_i=X_f
@@ -164,17 +162,17 @@ def scan(rank,alg,model,opt,connection=None):
             printer.print_model(X_f)
             #Reweigh X_i according to alg
             kernel.reweight(X_i)
-            #Put X_f in chain according to alg
+            #Put X_f in chain according
             chain.update(X_f)
         
         #Send state if send=True
         if chain.send:
             #No need to send to itself, just update state directly
             if rank==0:
-                updates+=[chain]
+                updates+=[chain.updates]
             #Send updated chain state to master
             else:
-                comm.send_chain(chain)
+                comm.send_chain(chain.updates)
         
         if rank==0:
             #Master: check for and get updated chain_state of workers
