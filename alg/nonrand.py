@@ -62,7 +62,7 @@ class state(alg.state):
                 self.full_params_set=grid_from_arrays(opt.scan_range)
             
             #Change stop_size if opt.sample_size>points in file
-            self.stop_size=min(len(self.full_params_set.values()[0]),self.stop_size)
+            self.sample_size=min(len(self.full_params_set.values()[0]),self.sample_size)
                     
         else:
             self.full_params_set=None
