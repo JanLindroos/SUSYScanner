@@ -27,7 +27,7 @@ class state(object):
         self.mc_error=dict([(key,sp.nan) for key in self.param_names])#Standard mc error
         
         #Properties of chains
-        self.chains['continue_sampling']=sp.ones(opt.chains)#Sampling state of chains
+        self.chains={'continue_sampling':sp.ones(opt.chains)}#Sampling state of chains
         self.chains['size']=sp.zeros(opt.chains)#Number of likelihood evaluations by chain
         self.chains['accept']=sp.zeros(opt.chains)#Number of accepted points by chain
         self.chains['mean']=dict([(key,sp.nan*sp.ones(opt.chains)) for key in self.param_names])#total mean for each chain
