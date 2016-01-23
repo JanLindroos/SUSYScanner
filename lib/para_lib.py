@@ -64,7 +64,7 @@ class communicate(object):
                 self.req[i]=self.comm.isend(state,dest=i+1,tag=1)
                 print "%s: Master sent state to %i"%(time.strftime("%Y-%m-%d %H:%M:%S"),i+1)
             if self.mode=='multiprocessing':
-                if state.chain_status[i+1]:
+                if state.chains['continue_sampling'][i+1]:
                     self.comm[i].send(state)
                     #print "send state to %i"%(i+1)
                 #else:
