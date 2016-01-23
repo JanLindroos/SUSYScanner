@@ -90,6 +90,8 @@ def init_run(args):
     #import model
     exec('from '+module.rstrip('.py')+' import model')
     model=init_model(opt,model)
+    print 'after init_model:'
+    print dir(model)
     
     if 'print_params' not in dir(opt):
         opt.print_params=model.param_names[0:5]
@@ -103,6 +105,8 @@ def init_run(args):
             new_print_params+=[name]
     opt.print_params=new_print_params
     
+    print 'returning from init_run'
+    print dir(model)
     return alg,model,opt
 
 #Modify model based on options    
@@ -110,9 +114,11 @@ def init_model(opt,model):
     #Set up data directory to be made by init_dirs
     model.datadirs={'main':os.path.join(opt.path,opt.run_name)}           
     
-    #Initialize model if initialization method included   
+    #Initialize model if initialization method included
     if 'initialize' in dir(model):
         model.initialize(opt)
+        print 'after initialize:'
+        print dir(model)        
         
     #Add accept attribute
     model.accept=True

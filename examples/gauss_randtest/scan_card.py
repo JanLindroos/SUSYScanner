@@ -9,7 +9,7 @@ import sys
 
 alg='rand'
 mode='multiprocessing'#run mode, multiprocessing for single machine, MPI for cluster
-chains=10#number of cpus to use in multiprocessing (and for local multiprocessing when MPI is used)
+chains=1#number of cpus to use in multiprocessing (and for local multiprocessing when MPI is used)
 sample_size=1000000#Number of likelihood evaluations (after initialization)
 fileformat='dat'
 merge_files=True
