@@ -34,14 +34,15 @@ class state(alg.state):
         alg.state.update(self,updates)
         for chain in updates:
             #update global trial/error count 
-            state.mcmc['n_try']+=chain.mcmc['n_try']
-            state.mcmc['n_acc']+=chain.mcmc['n_try']
+            state.mcmc['n_try']+=chain.batch['n_try']
+            state.mcmc['n_acc']+=chain.batch['n_acc']
             #get cluster data from chains
             #Need to figure out how to do this in practise...Maybe do all updates through chain.update?
-            cluster_data=chain.batch_data????
+            cluster_data=chain.batch['data']
         
         for i in range(len(state.mcmc['n_try'])):
             if state.mcmc['n_try'][i]>=state.batch_size:
+                r=state.mcmc['n_acc']/float(state.mcmc['n_try'])
                 if r<0.1:
                     sigma=0.04659906017846561
                     scale=sp.exp(-(0.1-r)**2/float(2*sigma**2))

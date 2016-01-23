@@ -134,33 +134,39 @@ def scan(rank,alg,model,opt,connection=None):
             X_f.calculate()
             if X_f.accept:
                 X_f.accept=kernel.accept(X_i,X_f,state,u)            
-          
-        #accept/reject point
+        
+        #finalize model if method exists
+        if 'finalize' in dir(X_f):
+            X_f.finalize()
+        
+        
+        
         #If accept update
         if X_f.accept:
-            chain.accepted+=1
-            chain.batch_sum+=X_i.weight*sp.array(X_i.params.values())
-            chain.batch_weight+=X_i.weight
-            if X_i.lnP>chain.lnP_max:
-                chain.lnP_max=X_i.lnP
-                chain.params_bf=X_i.params
-                    
+#            chain.accepted+=1
+#            chain.batch_sum+=X_i.weight*sp.array(X_i.params.values())
+#            chain.batch_weight+=X_i.weight
+#            if X_i.lnP>chain.lnP_max:
+#                chain.lnP_max=X_i.lnP
+#                chain.params_bf=X_i.params
+            
+            #Write data to file and screen        
             writer.add(X_i)
             printer.print_model(X_i)
-
+            #Put X_i in chain according to alg
+            chain.update(X_i)
+            #Move to new point
             X_i=X_f
             #Assign initial weight, differs for different algorithms
             kernel.weight(X_i)
         else:
+            #Write data to screen
             printer.print_model(X_f)
+            #Reweigh X_i according to alg
             kernel.reweight(X_i)
-
-        #finalize model if method exists
-        if 'finalize' in dir(X_f):
-            X_f.finalize()            
+            #Put X_f in chain according to alg
+            chain.update(X_f)
         
-        #update chain
-        chain.update()
         #Send state if send=True
         if chain.send:
             #No need to send to itself, just update state directly
@@ -169,9 +175,6 @@ def scan(rank,alg,model,opt,connection=None):
             #Send updated chain state to master
             else:
                 comm.send_chain(chain)
-            
-            #Reinitialize send status
-            chain.send=False
         
         if rank==0:
             #Master: check for and get updated chain_state of workers
