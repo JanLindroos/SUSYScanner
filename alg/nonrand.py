@@ -122,7 +122,7 @@ class kernel(alg.kernel):
             modelid=str(params.pop('modelid'))
             #print "%i, modelid from file:%s"%(chain.rank,modelid)
         else:
-            modelid='%i%01i'%(self.rank,0)+'%i'%chain.accepted
+            modelid='%i%01i'%(self.rank,0)+'%i'%chain.accept
             #print "constructed modelid:%s"%(modelid)
         #print params
         return params, modelid        
@@ -136,7 +136,7 @@ class kernel(alg.kernel):
         if 'modelid' in params.keys():
             modelid=str(params.pop('modelid'))
         else:
-            modelid='%i%01i'%(self.rank,0)+'%i'%chain.accepted
+            modelid='%i%01i'%(self.rank,0)+'%i'%chain.accept
         
         return params, modelid
         
