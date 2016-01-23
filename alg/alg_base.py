@@ -23,18 +23,18 @@ class state(object):
         self.lnP_max=-sp.inf#Empty arrays giving the best fit for each chain
         self.size=0#Number of likelihood evaluations
         self.accept=0#Number of accepted models
-        self.mean=dict([(key,sp.nan) for key in self.params_names])#Global mean
-        self.mc_error=dict([(key,sp.nan) for key in self.params_names])#Standard mc error
+        self.mean=dict([(key,sp.nan) for key in self.param_names])#Global mean
+        self.mc_error=dict([(key,sp.nan) for key in self.param_names])#Standard mc error
         
         #Properties of chains
         self.chains['continue_sampling']=sp.ones(opt.chains)#Sampling state of chains
         self.chains['size']=sp.zeros(opt.chains)#Number of likelihood evaluations by chain
         self.chains['accept']=sp.zeros(opt.chains)#Number of accepted points by chain
-        self.chains['mean']=dict([(key,sp.nan*sp.ones(opt.chains)) for key in self.params_names])#total mean for each chain
-        self.chains['mc_error']=dict([(key,sp.nan*sp.ones(opt.chains)) for key in self.params_names])#batch means estimated error http://arxiv.org/abs/math/0601446
-        self.chains['weight']=dict([(key,sp.nan*sp.ones(opt.chains)) for key in self.params_names])#total weights of chains
+        self.chains['mean']=dict([(key,sp.nan*sp.ones(opt.chains)) for key in self.param_names])#total mean for each chain
+        self.chains['mc_error']=dict([(key,sp.nan*sp.ones(opt.chains)) for key in self.param_names])#batch means estimated error http://arxiv.org/abs/math/0601446
+        self.chains['weight']=dict([(key,sp.nan*sp.ones(opt.chains)) for key in self.param_names])#total weights of chains
         self.chains['lnP_bf']=-sp.inf*sp.ones(opt.chains)#chain best fit likelihoods
-        self.chains['params_bf']=[dict([(key,sp.nan) for key in self.params_names]) for i in range(opt.chains)]#chain best fit models
+        self.chains['params_bf']=[dict([(key,sp.nan) for key in self.param_names]) for i in range(opt.chains)]#chain best fit models
         self.chain_keys=self.chains.keys()#List of chain data to be sent to state
     
     #Update the global state based on the info in local states (dictionary)
@@ -82,8 +82,8 @@ class chain(object):
         self.send=False#wether chain should send status to master
         self.size=0#Number of Likelihood evaluations
         self.accept=0#Number of accepted models
-        self.mean=dict([(key,sp.nan) for key in self.params_names])#chain mean
-        self.mc_error=dict([(key,sp.nan) for key in self.params_names])#batch means estimate
+        self.mean=dict([(key,sp.nan) for key in self.param_names])#chain mean
+        self.mc_error=dict([(key,sp.nan) for key in self.param_names])#batch means estimate
         self.weight=0#Sum of weights for full chain
         self.lnP_bf=-sp.inf#Local best fit likelihood
         self.params_bf=None#Local best fit parameter
@@ -126,7 +126,7 @@ class chain(object):
                 #add batch weight to array of batch weights
                 sp.append(self.batch['weight'],sp.sum(self.batch['data']['weight']))
                 #add batch mean to array of batch means
-                for key in self.params_names:
+                for key in self.param_names:
                     sp.append(self.batch['mean'][key],stat.weighted_mean(self.batch['data'][key],self.batch['data']['weight']))
                     #calculate curren chain mean
                     self.mean[key]=stat.weighted_mean(self.batch['mean'],self.batch['weight'])
