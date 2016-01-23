@@ -14,6 +14,7 @@ class model(object):
     #Initialization method to integrate user changes (seen by all chains)
     @classmethod
     def initialize(cls,opt):
+        print 'inside initialize'
         cls.model_params=opt.scan_range.keys()
         cls.param_names=cls.model_params
         #Default is D-dim Gaussian Model with k=1, mu=0 and sigma=0.1

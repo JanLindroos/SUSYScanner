@@ -9,7 +9,7 @@ the chains
 import lib.io_lib as io
 from lib.prepost_lib import master_init
 import time
-import os
+import os,sys
 #MPI/multiprocessing shit
 class communicate(object):
     
@@ -123,7 +123,8 @@ class communicate(object):
     
 #Launch the scan in parallell    
 def launch(scan,alg,model,opt):
-    #print 'launching scan'        
+    print 'inside launch'
+    print dir(model)      
     #Set up MPI
     if opt.mode=='MPI':
         from mpi4py import MPI
@@ -152,8 +153,10 @@ def launch(scan,alg,model,opt):
     #Otherwise use multiprocessing    
     if opt.mode=='multiprocessing':
         import multiprocessing as mp
-        #impoer dill for proper pickling
-        #import dill
+        #import dill for proper pickling on windows
+        if sys.platform=='win32':
+            import dill
+        
         #print headers and initialize run_log
         io.print_init(opt)
         #master initialize: Sets up folders, and performs model.master_init if it exists

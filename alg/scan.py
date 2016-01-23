@@ -22,6 +22,8 @@ import time
 
 # change some text
 def scan(rank,alg,model,opt,connection=None):
+    print 'inside scan'
+    print dir(model)
     #Initialize random seed
     sp.random.seed(int(time.time())+rank)   
     #change to temporary working directory

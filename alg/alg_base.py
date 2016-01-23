@@ -15,6 +15,7 @@ class state(object):
     
     def __init__(self,rank,opt,model):
         #General info needed by state
+        print dir(model) 
         self.param_names=model.param_names#ordered names of parameteres
         self.sample_size=opt.sample_size#Final sample size requested
         
