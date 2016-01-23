@@ -122,9 +122,7 @@ class communicate(object):
         return state
     
 #Launch the scan in parallell    
-def launch(scan,alg,model,opt):
-    print 'inside launch'
-    print dir(model)      
+def launch(scan,alg,model,opt):      
     #Set up MPI
     if opt.mode=='MPI':
         from mpi4py import MPI
@@ -140,7 +138,7 @@ def launch(scan,alg,model,opt):
         
         #Wait for mother before starting
         comm.barrier()
-    
+        
         scan(rank,alg,model,opt)
         
         if rank==0:
@@ -153,9 +151,6 @@ def launch(scan,alg,model,opt):
     #Otherwise use multiprocessing    
     if opt.mode=='multiprocessing':
         import multiprocessing as mp
-        #import dill for proper pickling on windows
-        if sys.platform=='win32':
-            import dill
         
         #print headers and initialize run_log
         io.print_init(opt)
@@ -176,7 +171,7 @@ def launch(scan,alg,model,opt):
                 connection=master_ends
             else:
                 connection=worker_ends[rank-1]    
-            
+
             proc=mp.Process(target=scan, args=(rank,alg,model,opt,connection))
             proc.start()
     
