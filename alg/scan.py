@@ -20,6 +20,7 @@ import time
 
 # change some text
 def scan(rank,alg,model,opt,connection=None):
+    opt.debug=False
     #Initialize random seed
     sp.random.seed(int(time.time())+rank)   
     #change to temporary working directory
@@ -54,6 +55,8 @@ def scan(rank,alg,model,opt,connection=None):
         partial_lnP=False
     
     #Initialize scan according to alg
+    if opt.debug:
+        print rank,'before init'
     init=True
     while init:
         #sample initial parameters
@@ -90,13 +93,19 @@ def scan(rank,alg,model,opt,connection=None):
             #Assign initial weight, differs for different algorithms
             kernel.weight(X_i)
             chain.update(X_i)
+            if opt.debug:
+                print rank,'initialized...'
         else:
+            if opt.debug:
+                print rank,'initialization failed...'
             printer.print_model(X_i)
                           
         #finalize model if method exists
         if 'finalize' in dir(X_i):
             X_i.finalize()
-                    
+     
+    if opt.debug:
+        print rank,'before main loop'               
     #Loop while global and local state permits it
     while state.continue_sampling and chain.continue_sampling:
         #sample proposal
@@ -143,6 +152,8 @@ def scan(rank,alg,model,opt,connection=None):
             X_i=X_f
             #Assign initial weight, differs for different algorithms
             kernel.weight(X_i)
+            #if opt.debug:
+                #print rank,'model accepted', chain.accept, chain.size            
         else:
             #Write data to screen
             printer.print_model(X_f)
@@ -150,23 +161,33 @@ def scan(rank,alg,model,opt,connection=None):
             kernel.reweight(X_i)
             #Put X_f in chain according
             chain.update(X_f)
-        
+            if opt.debug:
+                print rank,'model failed', chain.accept, chain.size
+            
         #Send state if send=True
         if chain.send:
+            if opt.debug:
+                print rank,'sent chain update'
             #No need to send to itself, just update state directly
-            print 'sending data:',rank,chain.send
             if rank==0:
                 updates+=[chain.updates]
             #Send updated chain state to master
             else:
                 comm.send_chain(chain.updates)
         
+            if opt.debug:
+                print rank,'updates sent:', chain.updates
+                
         if rank==0:
             #Master: check for and get updated chain_state of workers
             while True:
                 updates+=comm.master_check()
                 #Master: update global state
+                if opt.debug:
+                    print rank,'checking for updates:',len(updates),opt.chains
                 if len(updates)==opt.chains:
+                    if opt.debug:
+                        print rank,'master recieved all updates:',updates
                     state.update(updates)
                     updates=[]
                 
@@ -183,8 +204,12 @@ def scan(rank,alg,model,opt,connection=None):
         else:
             #Worker: check for status update from master
             try:
+                if opt.debug:
+                    print rank,'worker checking for state'
                 state=comm.worker_check(state) 
             except:
+                if opt.debug:
+                    print rank,'worker finished'
                 state.continue_sampling=False
         
         #Write last point and print results
@@ -192,10 +217,14 @@ def scan(rank,alg,model,opt,connection=None):
             writer.add(X_i)
             printer.print_model(X_i)
             if rank==0:
+                if opt.debug:
+                    print rank,'master finishing up'
                 io.print_finish(opt)
         
     #close file
     #print 'closing writer'
+    if opt.debug:
+        print rank,'worker exiting scan'
     writer.close()
     os.chdir(orgdir)
     

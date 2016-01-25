@@ -38,8 +38,12 @@ def weighted_cov(data,weight,mean):
 
 #standard mc_error for weighted batches (tested for uniform sampling on gaussian distribution)
 def mc_error(total_mean,batch_means,batch_weights):
+    #batch_weights>1 to make sense
+    if len(batch_weights)<2:
+        return sp.nan
+    
     V_1=sp.sum(batch_weights)
     V_2=sp.sum(batch_weights**2)
     sigma_2=V_1/float(V_1**2-V_2)*sp.sum(batch_weights*(batch_means-total_mean)**2)
     mc_error=sp.sqrt(sigma_2/float(len(batch_weights)))         
-    return mc_error,total_mean
+    return mc_error
