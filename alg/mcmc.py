@@ -80,7 +80,7 @@ class kernel(alg.kernel):
         for key in self.functions.keys():
             params[key]=self.functions[key](params)
             
-        modelid='%i%01i'%(self.rank,0)+'%i'%chain.accepted
+        modelid='%i%01i'%(self.rank,0)+'%i'%chain.accept
                 
         return params,modelid
                 
@@ -96,7 +96,7 @@ class kernel(alg.kernel):
         for key in self.functions.keys():
             params[key]=self.functions[key](params)
             
-        modelid='%i%01i'%(self.rank,0)+'%i'%chain.accepted
+        modelid='%i%01i'%(self.rank,0)+'%i'%chain.accept
         
         return params,modelid
         

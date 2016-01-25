@@ -20,7 +20,7 @@ import time
 
 # change some text
 def scan(rank,alg,model,opt,connection=None):
-    opt.debug=False
+    opt.debug=True
     #Initialize random seed
     sp.random.seed(int(time.time())+rank)   
     #change to temporary working directory

@@ -97,8 +97,8 @@ class chain(alg.chain):
         #    else:
         #        self.params_set[name]=full_params_set[name][rank*dn:(rank+1)*dn]
                 
-    def update(self):
-        alg.chain.update(self)
+    def update(self,X):
+        alg.chain.update(self,X)
         #check if all assigned points have been calculated        
         if self.size>=len(self.params_set.values()[0]):                
             self.continue_sampling=False
