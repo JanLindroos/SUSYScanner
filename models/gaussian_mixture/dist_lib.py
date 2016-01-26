@@ -8,17 +8,15 @@ library for test distributions
 #import matplotlib
 #matplotlib.use('Agg')
 import scipy as sp
-#Workaround for faulty python install
-try:
-    from scipy.linalg import inv, det
-except:
-    from numpy.linalg import inv, det    
+import sys
+#Workaround for faulty python install   
 try:
     from scipy.misc import logsumexp
-except:
-    print 'custom logsum'
-    def logsumexp(chi_2,b=1):
-        sp.log(sp.sum(b*sp.exp(chi_2)))
+    from scipy.linalg import inv, det
+except Exception,e:
+    print 'Something is wrong with your scipy:'
+    print str(e)
+    sys.exit() 
 #from matplotlib import pyplot as plt, figure
 
 #Generate lnP function

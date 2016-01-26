@@ -20,7 +20,7 @@ import time
 
 # change some text
 def scan(rank,alg,model,opt,connection=None):
-    opt.debug=True
+    opt.debug=False
     #Initialize random seed
     sp.random.seed(int(time.time())+rank)   
     #change to temporary working directory
@@ -30,7 +30,7 @@ def scan(rank,alg,model,opt,connection=None):
     #Setup communicator
     comm=prl.communicate(rank,opt,connection) 
     #Initialize Markov chain kernel and markov chain   
-    kernel=alg.kernel(rank,opt)
+    kernel=alg.kernel(rank,opt,model)
     #Initialize global state
     state=alg.state(rank,opt,model)
 
@@ -48,51 +48,26 @@ def scan(rank,alg,model,opt,connection=None):
     writer=io.writer(rank,opt)
     printer=io.printer(rank,opt)          
     
-    #check if model has sequantial target distribution
-    if 'parts' in dir(model):
-        partial_lnP=True
-    else:
-        partial_lnP=False
-    
     #Initialize scan according to alg
     if opt.debug:
         print rank,'before init'
-    init=True
-    while init:
+
+    while True:
         #sample initial parameters
         params,modelid=kernel.initialize(state,chain)#Sample from initial distribution
         #Construct model from parameters
         X_i=model(modelid,params)
         
-        #Check if likelihood should be calculated sequentially
-        if partial_lnP:                                  
-            for part in X_i.parts:
-                #Calculate a target component and update
-                X_i.calculate(part)
- 
-                #check wether proposal already fails
-                if opt.sequential:
-                    if X_i.accept:
-                        X_i.accept=X_i.lnP>=opt.lnP_min
-                    if not X_i.accept:
-                        break
-            
-            if not opt.sequential and X_i.accept:
-                X_i.accept=X_i.lnP>=opt.lnP_min
-        
-        #If not simply calculate likelihood            
-        else:
-            X_i.calculate()
-            if X_i.accept:
-                X_i.accept=X_i.lnP>=opt.lnP_min
+        #New****************************************
+        X_i=kernel.calculate(X_i)
+        #New****************************************
             
         #If accept update
         if X_i.accept:
-            #Set init flag
-            init=False
             #Assign initial weight, differs for different algorithms
-            kernel.weight(X_i)
+            X_i=kernel.weight(X_i)
             chain.update(X_i)
+            break            
             if opt.debug:
                 print rank,'initialized...'
         else:
@@ -114,32 +89,8 @@ def scan(rank,alg,model,opt,connection=None):
         
         #generate random number for checking, dummyfor non-mcmc 
         u=sp.rand()        
-        #Check if likelihood should be calculated sequentially
-        if partial_lnP:                                  
-            for part in X_f.parts:
-                #Calculate a target component and update the total target
-                X_f.calculate(part)                
-                
-                #check wether proposal already fails
-                if opt.sequential:
-                    if X_f.accept:
-                        X_f.accept=kernel.accept(X_i,X_f,state,u)
-                    if not X_f.accept:
-                        break
-                    
-            if not opt.sequential and X_f.accept:
-                X_f.accept=kernel.accept(X_i,X_f,state,u)
-                        
-        else:
-            X_f.calculate()
-            if X_f.accept:
-                X_f.accept=kernel.accept(X_i,X_f,state,u)            
         
-        #finalize model if method exists
-        if 'finalize' in dir(X_f):
-            X_f.finalize()
-        
-        
+        X_f=kernel.calculate(X_f,X_i,state)
         
         #If accept update
         if X_f.accept:            
@@ -151,7 +102,7 @@ def scan(rank,alg,model,opt,connection=None):
             #Move to new point
             X_i=X_f
             #Assign initial weight, differs for different algorithms
-            kernel.weight(X_i)
+            X_i=kernel.weight(X_i)
             #if opt.debug:
                 #print rank,'model accepted', chain.accept, chain.size            
         else:

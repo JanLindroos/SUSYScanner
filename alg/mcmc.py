@@ -45,8 +45,8 @@ class chain(alg.chain):
 #random scan kernel for creating the chain
 class kernel(alg.kernel):
     
-    def __init__(self,rank,opt):
-        alg.kernel.__init__(self,rank,opt)
+    def __init__(self,rank,opt,model):
+        alg.kernel.__init__(self,rank,opt,model)
         self.scan_range=opt.scan_range
         self.constants=opt.constants
         self.functions=opt.functions
@@ -101,7 +101,7 @@ class kernel(alg.kernel):
         return params,modelid
         
     #Check wether proposal is accepted    
-    def accept(self,X_i,X_f,state,u=sp.rand):
+    def accept(self,X_f,X_i,state,u=sp.rand):
         #Calculate kernel
         a=X_f.lnP-X_i.lnP-state.lnQ(X_i,X_f)+state.lnQ(X_f,X_i)
         if sp.log(u)<=a:
@@ -113,10 +113,10 @@ class kernel(alg.kernel):
     
     def weight(self,X):
         X.weight=1
-        return
+        return X
     
     #Does nothing inside loop, all points are properly reweighed after
     #during postprocessing
     def reweight(self,X):
         X.weight+=1
-        return
+        return X

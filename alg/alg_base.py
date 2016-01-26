@@ -184,9 +184,47 @@ class chain(object):
 #random scan kernel for creating the chain
 class kernel(object):
     
-    def __init__(self,rank,opt):
+    def __init__(self,rank,opt,model):
         self.rank=rank
         self.lnP_min=opt.lnP_min
         #initialize weights for multi-ranged scan parameters
         self.range_weight={}
+        #check whether sequential model calculation should be employed
+        if 'parts' in dir(model) and opt.sequential==True:
+            self.sequential=True
+        else:
+            self.sequential=False
+            
         
+    #Kernels calculate method
+    def calculate(self,X,X_last=None,state=None):
+        #Random number for mcmc based acceptance
+        u=sp.rand()               
+        #Check if likelihood should be calculated sequentially
+        if self.sequential:                                  
+            for part in X.parts:
+                #Calculate lnP contribution from part and add to total lnP
+                X.calculate(part)                
+                #Determine wether model fails after part
+                if X_last==None:
+                    #Initial sampling
+                    X.accept=int(X.lnP>=self.lnP_min)
+                else:
+                    #Normal sampling
+                    X.accept=self.accept(X,X_last,state,u)
+                #Break loop if model is rejected   
+                if not X.accept:
+                    break
+                        
+        else:
+            X.calculate()
+            if X_last==None:
+                X.accept=int(X.lnP>=self.lnP_min)
+            else:
+                X.accept=self.accept(X,X_last,state,u)            
+        
+        #finalize model if method exists
+        if 'finalize' in dir(X):
+            X.finalize()
+            
+        return X

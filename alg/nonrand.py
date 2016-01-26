@@ -107,8 +107,8 @@ class chain(alg.chain):
 #random scan kernel for creating the chain
 class kernel(alg.kernel):
     
-    def __init__(self,rank,opt):
-        alg.kernel.__init__(self,rank,opt)
+    def __init__(self,rank,opt,model):
+        alg.kernel.__init__(self,rank,opt,model)
         
     def initialize(self,state,chain):
         params={}
@@ -153,9 +153,9 @@ class kernel(alg.kernel):
     
     def weight(self,X):
         X.weight=1
-        return
+        return X
     
     #Does nothing inside loop, all points are properly reweighed after
     #during postprocessing
     def reweight(self,X):
-        return
+        return X

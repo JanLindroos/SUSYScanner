@@ -26,8 +26,8 @@ class chain(alg.chain):
 #random scan kernel for creating the chain
 class kernel(alg.kernel):
     
-    def __init__(self,rank,opt):
-        alg.kernel.__init__(self,rank,opt)
+    def __init__(self,rank,opt,model):
+        alg.kernel.__init__(self,rank,opt,model)
         self.scan_range=opt.scan_range
         self.constants=opt.constants
         self.functions=opt.functions

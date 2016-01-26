@@ -62,16 +62,7 @@ class model(object):
                                                           
     #Constraints: construct components of lnP****************************************************************************                  
     constraints=dict([(part,[]) for part in parts])
-    #constraints['higgsbounds']+=[lambda pars: sp.log(int(pars['HB_excl']==0))]
-    #mh0_mu,mh0_sigma=[125.5 , 1.7]
-    #constraints['higgsbounds']+=[lambda pars: -(pars['m_h0']-mh0_mu)**2/(2*mh0_sigma**2)]
-    #constraints['micromegas']+=[lambda pars: sp.log(int(pars['LEP']==0))]
-    #Oh2_mu,Oh2_sigma=[0.1199 , 0.0027]
-    #constraints['micromegas']+=[lambda pars: -int(pars['Oh2']>Oh2_mu)*(pars['Oh2']-Oh2_mu)**2/(2*Oh2_sigma**2)+sp.log(int(pars['Oh2']>0))]
-    #Bsmu_mu,Bsmu_sigma=[3.2*10**(-9),1.5*10**(-9)]
-    #constraints['micromegas']+=[lambda pars: -(pars['Bsmumu']-Bsmu_mu)**2/(2*Bsmu_sigma**2)]
-    #bsg_mu,bsg_sigma=[3.55*10**(-4) , 0.42*10**(-4)]
-    #constraints['micromegas']+=[lambda pars:  -(pars['bsg']-bsg_mu)**2/(2*bsg_sigma**2)]
+
     
     #LHC event generation defaults
     #modes: SUSYMG (all processes), SUSY (internal pythia, customizable processes)
@@ -179,55 +170,60 @@ class model(object):
         #merge Datafile
                 
             
-    def calculate(self,part):
+    def calculate(self,part=None):
+        if part==None:
+            parts=model.parts
+        else:
+            parts=[part]            
         
-        #check if spectrum is OK for further calculation else return
-        if self.error>0:
-            #print self.errors
-            self.accept=False
-            self.lnP=-sp.inf
-            #remove files created by tools
-            if os.path.exists(self.slhafile):
-                os.remove(self.slhafile)
-            if os.path.exists(self.slhafile+'.fh'):
-                os.remove(self.slhafile+'.fh')
-            if os.path.exists(self.mgcard):
-                os.remove(self.mgcard)
-            for hepmcfile in self.hepmcfiles:
-                if os.path.exists(hepmcfile):
-                    os.remove(hepmcfile)
-            if os.path.exists(self.profile):
-                os.remove(self.profile)
-            if os.path.exists(self.rootfile):
-                os.remove(self.rootfile)
-                
-            return        
-        
-        #Calculate likelihood components related to tool
-        if 'softsusy' in part:
-            self=sl.run_softsusy(self)
-        if 'susyhit' in part: 
-            self=sl.run_susyhit(self)
-        if 'feynhiggs' in part:
-            self=sl.run_feynhiggs(self)
-        if 'higgsbounds' in part:
-            self=sl.run_higgsbounds(self)
-        if 'micromegas' in part:
-            self=sl.run_micromegas(self)
-        if 'pythia' in part:
-            self=sl.run_pythia(self)
-        if 'delphes' in part:
-            self=sl.run_delphes(self)
-        if 'prospino' in part:
-            self=sl.run_prospino(self)
+        for part in parts:
+            #check if spectrum is OK for further calculation else return
+            if self.error>0:
+                #print self.errors
+                #self.accept=False
+                self.lnP=-sp.inf
+                #remove files created by tools
+                if os.path.exists(self.slhafile):
+                    os.remove(self.slhafile)
+                if os.path.exists(self.slhafile+'.fh'):
+                    os.remove(self.slhafile+'.fh')
+                if os.path.exists(self.mgcard):
+                    os.remove(self.mgcard)
+                for hepmcfile in self.hepmcfiles:
+                    if os.path.exists(hepmcfile):
+                        os.remove(hepmcfile)
+                if os.path.exists(self.profile):
+                    os.remove(self.profile)
+                if os.path.exists(self.rootfile):
+                    os.remove(self.rootfile)
+                    
+                return        
             
-        #Calculate likelihood components related to tool               
-        for constraint in self.constraints[part]:
-            try:
-                self.lnP+=constraint(self.params)
-            except:
-                print "Error in %s constraints... terminating"%(part)
-                sys.exit()
+            #Calculate likelihood components related to tool
+            if 'softsusy' in part:
+                self=sl.run_softsusy(self)
+            if 'susyhit' in part: 
+                self=sl.run_susyhit(self)
+            if 'feynhiggs' in part:
+                self=sl.run_feynhiggs(self)
+            if 'higgsbounds' in part:
+                self=sl.run_higgsbounds(self)
+            if 'micromegas' in part:
+                self=sl.run_micromegas(self)
+            if 'pythia' in part:
+                self=sl.run_pythia(self)
+            if 'delphes' in part:
+                self=sl.run_delphes(self)
+            if 'prospino' in part:
+                self=sl.run_prospino(self)
+                
+            #Calculate likelihood components related to tool               
+            for constraint in self.constraints[part]:
+                try:
+                    self.lnP+=constraint(self.params)
+                except:
+                    print "Error in %s constraints... terminating"%(part)
+                    sys.exit()
             #print self.lnP,constraint(self.params)
             
         return

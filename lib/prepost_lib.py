@@ -8,23 +8,6 @@ initialization and clean up methods routines
 import sys,os,shutil
 import scipy as sp
 
-##turn module into
-#class cls(object):
-#        def __init__(self,module):
-#            for cls_att in dir(module):
-#                if '__' not in cls_att:
-#                    #Turn lambda function into proper function
-#                    if cls_att=='functions':
-#                        
-#                    self.__setattr__(cls_att,getattr(module,cls_att))
-#
-#def mod_to_obj(mod):
-#
-#    obj_obj=cls(mod)            
-#    
-#    return obj_obj
-   
-
 #takes the scan_card and sets up the run
 def init_run(args):
     #Add path to scan card to system path
@@ -46,9 +29,10 @@ def init_run(args):
     
     #import algorithm       
     exec('import alg.'+opt.alg+' as alg')
-        
-    #Add default print options if not specified
+           
     #Initialize dummy functions and constants if not present in model
+    if 'lnP_min' not in dir(opt):
+        opt.lnP_min=-sp.inf
     if 'model_change' not in dir(opt):
         opt.model_change={} 
     if 'constants' not in dir(opt):
