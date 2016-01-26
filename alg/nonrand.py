@@ -143,7 +143,7 @@ class kernel(alg.kernel):
         return acc
     
     def weight(self,X):
-        X.weight=1
+        X.weight=sp.exp(X.lnP)
         return X
     
     #Does nothing inside loop, all points are properly reweighed after
