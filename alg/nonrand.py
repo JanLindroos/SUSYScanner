@@ -89,20 +89,11 @@ class chain(alg.chain):
 
         #Remove full param set from state
         state.full_params_set=None
-        
-        #reduce to subset assigned to chain
-        #for name in full_params_set.keys():
-        #    if rank==opt.chains-1:
-        #        self.params_set[name]=full_params_set[name][rank*dn:(rank+1)*dn+mod_N]
-        #    else:
-        #        self.params_set[name]=full_params_set[name][rank*dn:(rank+1)*dn]
+        #Set local sample size equal to number of parameters
+        self.sample_size=len(self.params_set.values()[0])
                 
     def update(self,X):
         alg.chain.update(self,X)
-        #check if all assigned points have been calculated        
-        if self.size>=len(self.params_set.values()[0]):                
-            self.continue_sampling=False
-            self.send=True
 
 #random scan kernel for creating the chain
 class kernel(alg.kernel):
@@ -141,7 +132,7 @@ class kernel(alg.kernel):
         return params, modelid
         
     #Check wether proposal is accepted    
-    def accept(self,X_i,X_f,state,u=sp.rand):
+    def accept(self,X_f,X_i,state,u=sp.rand):
         #Calculate kernel
         acc=True
         #if self.rank==0:

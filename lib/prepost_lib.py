@@ -31,6 +31,8 @@ def init_run(args):
     exec('import alg.'+opt.alg+' as alg')
            
     #Initialize dummy functions and constants if not present in model
+    if 'fileformat' not in dir(opt):
+        opt.fileformat='dat'
     if 'lnP_min' not in dir(opt):
         opt.lnP_min=-sp.inf
     if 'model_change' not in dir(opt):
@@ -40,7 +42,7 @@ def init_run(args):
     if 'functions' not in dir(opt):
         opt.functions={}
     if 'merge_files' not in dir(opt):
-        opt.merge_files=False
+        opt.merge_files=True
     if 'print_level' not in dir(opt):
         opt.print_level=1
     if 'write_level' not in dir(opt):

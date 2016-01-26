@@ -14,7 +14,14 @@ class model(object):
     #Initialization method to integrate user changes (seen by all chains)
     @classmethod
     def initialize(cls,opt):
-        cls.model_params=opt.scan_range.keys()
+        #parse file header if input is from file
+        if type(opt.scan_range)==str:
+            with open(opt.scan_range, 'r') as f:
+                cls.model_params=[key for key in f.readline().strip().split() if key not in ['modelid','error','lnP','weight']]
+                print cls.model_params
+        else:
+            cls.model_params=opt.scan_range.keys()
+        
         cls.param_names=cls.model_params
         #Default is D-dim Gaussian Model with k=1, mu=0 and sigma=0.1
         cls.dist_vars={'dist':'gaussian','mu':[sp.zeros(len(cls.model_params))],'cov':[0.1**2*sp.eye(len(cls.model_params))],'w':[1]}

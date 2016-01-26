@@ -91,7 +91,7 @@ class kernel(alg.kernel):
         return params, modelid
         
     #Check wether proposal is accepted    
-    def accept(self,X_i,X_f,state,u=sp.rand):
+    def accept(self,X_f,X_i,state,u=sp.rand):
         #Calculate kernel
         acc=True
         #if self.rank==0:

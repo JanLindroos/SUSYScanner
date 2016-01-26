@@ -17,9 +17,11 @@ import os
 import lib.io_lib as io
 import lib.para_lib as prl
 import time
+import signal
 
 # change some text
-def scan(rank,alg,model,opt,connection=None):
+def scan(rank,alg,model,opt,connection=None): 
+    #turn on debugging
     opt.debug=False
     #Initialize random seed
     sp.random.seed(int(time.time())+rank)   
@@ -87,9 +89,6 @@ def scan(rank,alg,model,opt,connection=None):
         params,modelid=kernel.propose(X_i,state,chain)
         X_f=model(modelid,params)        
         
-        #generate random number for checking, dummyfor non-mcmc 
-        u=sp.rand()        
-        
         X_f=kernel.calculate(X_f,X_i,state)
         
         #If accept update
@@ -119,6 +118,9 @@ def scan(rank,alg,model,opt,connection=None):
         if chain.send:
             if opt.debug:
                 print rank,'sent chain update'
+            #if sp.isnan(chain.updates['weight']):
+            #    print rank,'has sp.nan in update, but send=', chain.send
+            #    print chain.updates
             #No need to send to itself, just update state directly
             if rank==0:
                 updates+=[chain.updates]
@@ -136,7 +138,8 @@ def scan(rank,alg,model,opt,connection=None):
                 #Master: update global state
                 if opt.debug:
                     print rank,'checking for updates:',len(updates),opt.chains
-                if len(updates)==opt.chains:
+                    print state.chains['continue_sampling']
+                if len(updates)>=opt.chains:
                     if opt.debug:
                         print rank,'master recieved all updates:',updates
                     state.update(updates)
@@ -148,6 +151,8 @@ def scan(rank,alg,model,opt,connection=None):
                     
                 #If master is finished before worker then wait
                 if chain.continue_sampling==False and state.continue_sampling==True:
+                    if opt.debug:
+                        print rank,'master waiting for workers to finish:',len(updates)
                     pass
                 else:
                     break
@@ -155,8 +160,8 @@ def scan(rank,alg,model,opt,connection=None):
         else:
             #Worker: check for status update from master
             try:
-                if opt.debug:
-                    print rank,'worker checking for state'
+                #if opt.debug:
+                    #print rank,'worker checking for state'
                 state=comm.worker_check(state) 
             except:
                 if opt.debug:

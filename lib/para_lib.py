@@ -177,10 +177,10 @@ def launch(scan,alg,model,opt):
     
             processes.append(proc)
     
+
         for proc in processes:
-            proc.join()
-            
-        
+            proc.join()     
+       
         #Check if output from different files should be merged
         if opt.merge_files:
             infiles=[os.path.join(opt.path,opt.run_name,'%s_%i.dat'%(opt.run_name,i)) for i in range(opt.chains)]

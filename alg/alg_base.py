@@ -165,15 +165,15 @@ class chain(object):
                     
                     #print 'new mean and error',self.mean[key],self.mc_error[key]
                 
+                #Final sample size requested
+                if self.size>=self.sample_size:
+                    self.continue_sampling=False
+                
                 #Fill updates for sending
                 self.updates=dict([(key,getattr(self,key)) for key in self.updates.keys()])
                 #print 'batch ready for send', self.updates
                 #Set send status to true    
                 self.send=True
-                
-                #Final sample size requested
-                if self.size>=self.sample_size:
-                    self.continue_sampling=False
 
         if self.size>=self.sample_size:#Final sample size requested
             print 'Worker %i has reached max size, sampling stopped'%(self.rank)

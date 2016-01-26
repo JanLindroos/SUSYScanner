@@ -10,6 +10,7 @@ import scipy as sp
 from time import time
 from slha_converter import convert_to_mg5card
 import multiprocessing
+import signal
 
 run_method='proc_shell'
 #Get root path to SUSYScanner
@@ -61,12 +62,13 @@ def run_tool(cmd,mode='proc_shell',result_queue=None,tag=''):
             if mode=='proc_shell':
                 [out, err] = proc.communicate()
             break
+        
         except Exception as err:
             tries+=1
             print "%s did not execute properly on %i attempt..."%(cmd,tries)
             print err
             out,err=["",str(err)]
-            
+        
     if mode=='mp_proc_noshell':
         return
     
