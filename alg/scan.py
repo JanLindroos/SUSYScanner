@@ -17,7 +17,6 @@ import os
 import lib.io_lib as io
 import lib.para_lib as prl
 import time
-import signal
 
 # change some text
 def scan(rank,alg,model,opt,connection=None): 
@@ -59,16 +58,17 @@ def scan(rank,alg,model,opt,connection=None):
         params,modelid=kernel.initialize(state,chain)#Sample from initial distribution
         #Construct model from parameters
         X_i=model(modelid,params)
-        
+
         #New****************************************
-        X_i=kernel.calculate(X_i)
+        X_i=kernel.calculate(X_i,state)
         #New****************************************
             
         #If accept update
         if X_i.accept:
             #Assign initial weight, differs for different algorithms
             X_i=kernel.weight(X_i)
-            chain.update(X_i)
+            #should I update???            
+            #chain.update(X_i)
             break            
             if opt.debug:
                 print rank,'initialized...'
@@ -89,7 +89,7 @@ def scan(rank,alg,model,opt,connection=None):
         params,modelid=kernel.propose(X_i,state,chain)
         X_f=model(modelid,params)        
         
-        X_f=kernel.calculate(X_f,X_i,state)
+        X_f=kernel.calculate(X_f,state,X_i)
         
         #If accept update
         if X_f.accept:            

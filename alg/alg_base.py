@@ -196,7 +196,7 @@ class kernel(object):
             
         
     #Kernels calculate method
-    def calculate(self,X,X_last=None,state=None):
+    def calculate(self,X,state,X_last=None):
         #Random number for mcmc based acceptance
         u=sp.rand()               
         #Check if likelihood should be calculated sequentially
