@@ -31,6 +31,8 @@ def init_run(args):
     exec('import alg.'+opt.alg+' as alg')
            
     #Initialize dummy functions and constants if not present in model
+    #mcmc options
+    
     if 'fileformat' not in dir(opt):
         opt.fileformat='dat'
     if 'lnP_min' not in dir(opt):

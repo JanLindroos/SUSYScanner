@@ -36,6 +36,21 @@ def weighted_cov(data,weight,mean):
 
     return cov
 
+#combine means of two samples weighted by sample size    
+def combine_means(means,sizes):
+    new_mean=(means[0]*sizes[0]+means[1]*sizes[1])/float(sizes[0]+sizes[1])
+    return new_mean
+
+#combines two covariances     
+def combine_covs(covs,means,sizes):
+    N_d=len(means[0])
+    size_tot=sp.sum(sizes)
+    new_cov=sp.zeros((N_d,N_d))
+    for i in range(N_d):
+        for j in range(N_d):
+            new_cov[i,j]=(sizes[0]*covs[0][i,j]+sizes[1]*covs[1][i,j])/float(size_tot)+(means[0][i]-means[1][i])*(means[0][j]-means[1][j])*(sizes[0]*sizes[1])/float(size_tot**2)
+    return new_cov
+
 #standard mc_error for weighted batches (tested for uniform sampling on gaussian distribution)
 def mc_error(total_mean,batch_means,batch_weights):
     #batch_weights>1 to make sense

@@ -8,6 +8,7 @@ Library for clustering, uses cython for speedup
 """
 
 import scipy as sp
+from stat_lib import weighted_cov
 from math import *
 
 ##Method for clustering data
@@ -15,13 +16,12 @@ from math import *
 #data: dictionary data['params']=numpy.array
 #k: number of clusters
 #maxit: maximum number of iterations
-#Output: list of cluster indices, centroids, cluster weights and covariances 
-def cluster(data_dict,k,maxit,lnw=None,dcmin=1e-5,do_pp=1,centroids=None,plot_clusters=0):
+#Output: list of normalized cluster indices, centroids, cluster weights and covariances 
+def cluster(data_dict,k,norm=False,maxit=100,lnw=None,dcmin=1e-5,do_pp=1,centroids=None,return_data=False):
     #print 'Setting up cluster data...'
     clusters={}
-    
     #set up data in array form
-    N_d,N_p=[len(data_dict[data_dict.keys()[0]]),len(data_dict.keys())]    
+    N_d,N_p=[len(data_dict[data_dict.keys()[0]]),len(data_dict.keys())]
     
     #data weights, based on likelihood
     if lnw==None:
@@ -30,19 +30,22 @@ def cluster(data_dict,k,maxit,lnw=None,dcmin=1e-5,do_pp=1,centroids=None,plot_cl
         lnw_max=lnw.max()
         weight=sp.exp(lnw-lnw_max-sp.log(sp.sum(sp.exp(lnw-lnw_max))))    
 
-
     data=sp.zeros((N_p,N_d))
     #data_norm=data[0:l_d,:].copy()
     #clusters['vars']={}
-    clusters['norm']={}
-    clusters['i_s']={}
+    if norm:
+        clusters['norm']={}
+    clusters['i_p']={}
     for i in range(len(data_dict.keys())):
         #Normalize data
         key=data_dict.keys()[i]
-        data_i=data_dict[key]
-        clusters['norm'][key]={'max':data_i.max(),'min':data_i.min()}
-        data[i,:]=(data_i-clusters['norm'][key]['min'])/float(clusters['norm'][key]['max']-clusters['norm'][key]['min'])
-        clusters['i_s'][key]=i
+        if norm:
+            data_i=data_dict[key]
+            clusters['norm'][key]={'max':data_i.max(),'min':data_i.min()}
+            data[i,:]=(data_i-clusters['norm'][key]['min'])/float(clusters['norm'][key]['max']-clusters['norm'][key]['min'])
+        else:
+            data[i,:]=data_dict[key]
+        clusters['i_p'][key]=i
           
 
     passed=0
@@ -84,10 +87,12 @@ def cluster(data_dict,k,maxit,lnw=None,dcmin=1e-5,do_pp=1,centroids=None,plot_cl
         #print 'data points:',N_d
 
         passed=1
+    
+    if return_data:    
+        cluster_data={'cind':cind,'data':data,'weight':weight}
+        return clusters,cluster_data
         
-    cluster_data={'cind':cind,'data':data,'weight':weight}
-
-    return clusters,cluster_data
+    return clusters
 
 ## Method for initializing centroids    
 def init_centroids(x,weight,k,do_pp):
@@ -152,27 +157,3 @@ def new_centroids(x,weight,cind,c):
         dc[i]=sp.sqrt(dc[i])
 
     return x_s,dc,w_s
-    
-def weighted_cov(data,weight,mean):
-    w_sum=sp.sum(weight)
-    weight=weight/w_sum
-    #weight=1/float(len(data[0,:]))*sp.ones(len(data[0,:]))
-    cov=0
-    for j in range(len(data[0,:])):
-        dmu=sp.matrix(data[:,j]-mean)
-        #print dmu
-        dmu_T=sp.transpose(dmu)
-        #print dmu_T
-        #print weight_i[j]
-        cov+=weight[j]*sp.dot(dmu_T,dmu)
-        #print cov
-
-    w_sum=sp.sum(weight)
-    try:
-        C=1/float((1-sp.sum(weight**2)))
-        cov=sp.array(C*cov)
-    except:
-        print 'Weighting is singular, reweighting with max point removed'
-        cov=weighted_cov(data[:,weight!=weight.max()],weight[weight!=weight.max()],mean)        
-
-    return cov

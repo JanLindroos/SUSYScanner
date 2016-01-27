@@ -73,8 +73,7 @@ class state(object):
         if self.size>=self.sample_size or not self.chains['continue_sampling'].any():
             #print 'stop_sampling'
             self.continue_sampling=False
-            
-        return    
+                
 
 #local state of individual chains        
 class chain(object):

@@ -8,10 +8,9 @@ Basic metropolis-hastings algorithm
 
 import scipy as sp
 import alg_base as alg
-try:
-    from scipy.linalg import det, inv
-except:
-    from numpy.linalg import det, inv    
+from scipy.linalg import det, inv
+
+       
 #State of the scan
 class state(alg.state):
     
