@@ -21,7 +21,7 @@ def cluster(data_dict,k,norm=False,maxit=100,lnw=None,dcmin=1e-5,do_pp=1,centroi
     #print 'Setting up cluster data...'
     clusters={}
     #set up data in array form
-    N_d,N_p=[len(data_dict[data_dict.keys()[0]]),len(data_dict.keys())]
+    N_d,N_p=[len(data_dict.values()[0]),len(data_dict.keys())]
     
     #data weights, based on likelihood
     if lnw==None:
@@ -52,9 +52,9 @@ def cluster(data_dict,k,norm=False,maxit=100,lnw=None,dcmin=1e-5,do_pp=1,centroi
     while passed==0:
         #initialize centroids
         if centroids==None:
-            #print 'Initializing centroids...'
+            print 'Initializing centroids...'
             centroids=init_centroids(data,weight,k,do_pp)
-            #print centroids
+            print centroids
 
         for i in range(maxit):
             #Find nearest centroid

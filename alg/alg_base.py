@@ -175,7 +175,6 @@ class chain(object):
                 self.send=True
 
         if self.size>=self.sample_size:#Final sample size requested
-            print 'Worker %i has reached max size, sampling stopped'%(self.rank)
             self.continue_sampling=False
             self.updates=dict([(key,getattr(self,key)) for key in self.updates.keys()])
             self.send=True

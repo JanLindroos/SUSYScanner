@@ -86,10 +86,13 @@ def scan(rank,alg,model,opt,connection=None):
     #Loop while global and local state permits it
     while state.continue_sampling and chain.continue_sampling:
         #sample proposal
+        #print 'X_i before propose:',dir(X_i)
         params,modelid=kernel.propose(X_i,state,chain)
         X_f=model(modelid,params)        
         
         X_f=kernel.calculate(X_f,state,X_i)
+        #print 'X_f after calc:',dir(X_f)
+        #print 'X_i after calc:',dir(X_i)
         
         #If accept update
         if X_f.accept:            
