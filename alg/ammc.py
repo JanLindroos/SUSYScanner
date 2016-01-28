@@ -64,9 +64,11 @@ class state(alg.state):
                 cluster_data=chain_update['cluster_data']
             else:
                 cluster_data=dict([(key,sp.append(cluster_data[key],chain_update['cluster_data'][key])) for key in cluster_data.keys()])
-            
+          
         lnw=sp.log(cluster_data.pop('weight'))
         
+        print 'small jump accceptance after update:'
+        print sp.divide(self.mcmc['n_acc'],self.mcmc['n_try'])
         for i in range(self.mcmc['k']):
             if self.mcmc['n_try'][i]>=self.mcmc['n_update']:
                 r=self.mcmc['n_acc'][i]/float(self.mcmc['n_try'][i])
@@ -74,41 +76,53 @@ class state(alg.state):
                 if r<0.1:
                     sigma=0.04659906017846561
                     scale=sp.exp(-(0.1-r)**2/float(2*sigma**2))
+                    #print 'acceptance rate too small r=%f, scaling by %f'%(r,scale)
+                    #start fresh
+                    self.mcmc['n_acc'][i]=0
+                    self.mcmc['n_try'][i]=0
                 if r>0.3:
                     a=18.367346938775512
                     scale=a*(r-0.3)**2+1
+                    #print 'acceptance rate too big r=%f, scaling by %f'%(r,scale)
+                    #start fresh
+                    self.mcmc['n_acc'][i]=0
+                    self.mcmc['n_try'][i]=0
 
                 if self.mcmc['clusters']==None:
                     self.mcmc['alpha_Q']=scale*self.mcmc['alpha_Q']
                     break
                 else:
                     self.mcmc['alpha_Q'][i]=scale*self.mcmc['alpha_Q'][i]
-                #start fresh
-                self.mcmc['n_acc'][i]=0
-                self.mcmc['n_try'][i]=0
                 
-            #Update proposal distribution
-            if self.mcmc['clusters']==None:
-                #Update proposal based on chain data
-                clusters=cl.cluster(cluster_data,self.mcmc['k'],lnw=lnw)
-                self.mcmc['clusters']=clusters
-            else:
-                print 'mcmc_clusters:',self.mcmc['clusters']
-                clusters=cl.cluster(cluster_data,self.mcmc['k'],lnw=lnw,centroids=sp.array(self.mcmc['clusters']['mean']))
-                print 'new_clusters:',clusters
-                #Go through clusters and update covariances and means
-                for i in range(self.mcmc['k']):
+        #Update proposal distribution
+        if self.mcmc['clusters']==None:
+            #Update proposal based on chain data
+            clusters=cl.cluster(cluster_data,self.mcmc['k'],lnw=lnw)
+            self.mcmc['clusters']=clusters
+            #Reset mcmc step count after clustering starts
+            self.mcmc['n_acc']=sp.zeros(len(self.mcmc['n_acc']))
+            self.mcmc['n_try']=sp.zeros(len(self.mcmc['n_acc']))            
+        else:
+            clusters=cl.cluster(cluster_data,self.mcmc['k'],lnw=lnw,centroids=sp.array(self.mcmc['clusters']['mean']).T)
+            #print 'new_clusters:',clusters
+            #Go through clusters and update covariances and means
+            for i in range(self.mcmc['k']):
+                try:
                     means=[self.mcmc['clusters']['mean'][i],clusters['mean'][i]]
                     covs=[self.mcmc['clusters']['cov'][i],clusters['cov'][i]]
                     sizes=[self.mcmc['clusters']['size']*self.mcmc['clusters']['weight'][i],clusters['size']*clusters['weight'][i]]
-                    print 'covs',covs
-                    print 'means',means
-                    print 'sizes',sizes
+                    #print 'covs',covs
+                    #print 'means',means
+                    #print 'sizes',sizes
                     self.mcmc['clusters']['mean'][i]=stat.combine_means(means,sizes)
                     self.mcmc['clusters']['cov'][i]=stat.combine_covs(covs,means,sizes)
                     self.mcmc['clusters']['weight'][i]=(sizes[0]+sizes[1])/float(self.mcmc['clusters']['size']+clusters['size'])
-                
-                self.mcmc['clusters']['size']+=clusters['size']
+                except:
+                    print 'Unable to update clusters'
+                    #print 'cluster_data:',cluster_data
+                    #print 'clusters:',clusters
+            
+            self.mcmc['clusters']['size']+=clusters['size']
 
 #local state of individual chains        
 class chain(alg.chain):
@@ -117,24 +131,32 @@ class chain(alg.chain):
         alg.chain.__init__(self,rank,opt,model,state)
         self.mcmc_params=opt.scan_range.keys()
         self.step=None#wether step is local or global (updated directly in kernel.propose)
-        self.batch['n_acc']=sp.zeros(state.mcmc['k'])#accepted local steps in current batch
-        self.batch['n_try']=sp.zeros(state.mcmc['k'])#tried local steps in current batch
+        self.cluster_data=None
+        self.n_acc=sp.zeros(state.mcmc['k'])#accepted local steps in current batch
+        self.n_try=sp.zeros(state.mcmc['k'])#tried local steps in current batch
         
     #Update states based on updates from chains
     def update(self,X):
         alg.chain.update(self,X)
         
+        #print 'step:',self.step
         if self.step=='local':
-            self.batch['n_try'][X.cind]+=1
+            self.n_try[X.cind]+=1
             if X.accept:
-                self.batch['n_acc'][X.cind]+=1    
+                self.n_acc[X.cind]+=1
+            #print 'local step:'
+            #print self.n_try
+            #print self.n_acc
         
         if self.send:
             #Add data for adaption to updates
-            self.updates['cluster_data']=dict([(key,self.batch['data']['params'][key]) for key in self.mcmc_params])
-            self.updates['cluster_data']['weight']=self.batch['data']['weight']
-            self.updates['n_try']=self.batch['n_try']
-            self.updates['n_acc']=self.batch['n_acc']       
+            self.cluster_data=dict([(key,self.batch['data']['params'][key]) for key in self.mcmc_params])
+            self.cluster_data['weight']=self.batch['data']['weight']
+            self.updates['cluster_data']=self.cluster_data
+            self.updates['n_try']=self.n_try
+            self.updates['n_acc']=self.n_acc
+            self.n_acc=sp.zeros(len(self.n_acc))#accepted local steps in current batch
+            self.n_try=sp.zeros(len(self.n_try))#tried local steps in current batch
 
 #random scan kernel for creating the chain
 class kernel(alg.kernel):
@@ -167,6 +189,7 @@ class kernel(alg.kernel):
         N_p=len(self.scan_range.keys())                
         #if no clusters simply normal mcmc with spherical gaussian
         if state.mcmc['clusters']==None:
+            #print 'standard mcmc'
             #Order not relevant due to spherical symmetry
             x_i=sp.array([X_i.params[key] for key in self.scan_range.keys()])
             #print x_i
@@ -174,6 +197,7 @@ class kernel(alg.kernel):
             lnQ=-0.5*sp.dot(sp.dot(sp.transpose(x_i-x_f),inv(state.mcmc['alpha_Q'][0]*state.mcmc['Q_cov'])),(x_i-x_f))
         #If clusters exist include global term
         else:
+            #print 'cluster based'
             x_i,x_f=[sp.zeros(N_p),sp.zeros(N_p)]
             for key in state.mcmc['clusters']['i_p'].keys():
                 x_i[state.mcmc['clusters']['i_p'][key]]=X_i.params[key]
@@ -181,17 +205,21 @@ class kernel(alg.kernel):
             
             #Add local contribution
             #print 'X_i:',dir(X_i)
-            Q_k=[-0.5*sp.dot(sp.dot(sp.transpose(x_i-x_f),inv(state.mcmc['alpha_Q'][X_i.cind]*state.mcmc['cov'][X_i.cind])),(x_i-x_f))]
-            Q_w=[(1-state.mcmc['beta_Q'])*sp.array([1/sp.sqrt(det(state.mcmc['alpha_Q'][X_i.cind]*state.mcmc['cov'][X_i.cind]))])]
+            Q_k=[-0.5*sp.dot(sp.dot(sp.transpose(x_i-x_f),inv(state.mcmc['alpha_Q'][X_i.cind]*state.mcmc['clusters']['cov'][X_i.cind])),(x_i-x_f))]
+            Q_w=[(1-state.mcmc['beta_Q'])/sp.sqrt(det(state.mcmc['alpha_Q'][X_i.cind]*state.mcmc['clusters']['cov'][X_i.cind]))]
             
             #Add non-local gaussian contribution
+            
             for i in range(state.mcmc['k']):
                 #exclude current cluster from large jump
-                if i!=X_i.cind:
-                    Q_k+=[-0.5*sp.dot(sp.dot(sp.transpose(state.mcmc['mean'][i]-x_f),inv(state.mcmc['cov'][i])),(state.mcmc['mean'][i]-x_f))]
-                    Q_w+=[state.mcmc['beta_Q']*state.mcmc['weight']/float(sp.sqrt(det(state.mcmc['cov'][i])))]
-    
+                #if i!=X_i.cind:
+                Q_k+=[-0.5*sp.dot(sp.dot(sp.transpose(state.mcmc['clusters']['mean'][i]-x_f),inv(state.mcmc['clusters']['cov'][i])),(state.mcmc['clusters']['mean'][i]-x_f))]
+                Q_w+=[state.mcmc['beta_Q']*state.mcmc['clusters']['weight'][i]/float(sp.sqrt(det(state.mcmc['clusters']['cov'][i])))]
+            
             lnQ=logsumexp(Q_k,b=Q_w)
+            #print 'Q_k',Q_k
+            #print 'Q_w',Q_w
+            #print 'lnQ:',lnQ,'lnQ_test',lnQ_test
         return lnQ
      
     #Sample point based on Proposal distribution
@@ -250,7 +278,7 @@ class kernel(alg.kernel):
                     params[key]=sp.rand()*(self.scan_range[key][i_sel+1]-self.scan_range[key][i_sel])+self.scan_range[key][i_sel]
         #Sample globally according to initial proposal
         else:
-            params,step=self.sample_Q(state)
+            params,chain.step=self.sample_Q(state)
             
         #Add constant parameters
         params.update(self.constants)
@@ -265,7 +293,7 @@ class kernel(alg.kernel):
     #Method for proposing new point X_f given X_i
     def propose(self,X,state,chain):
         #sample new parameters based on current point and state
-        params,step=self.sample_Q(state,X)
+        params,chain.step=self.sample_Q(state,X)
         #Add constants        
         params.update(self.constants)
         #Add functions
@@ -277,11 +305,12 @@ class kernel(alg.kernel):
         return params,modelid
         
     #Check wether proposal is accepted    
-    def accept(self,X_i,X_f,state,u=sp.rand()):
+    def accept(self,X_f,X_i,state,u=sp.rand()):
         #print 'X_i in accept:',dir(X_i)
         #print 'X_f in accept:',dir(X_f)
         #Calculate kernel
         a=X_f.lnP-X_i.lnP-self.lnQ(X_i,X_f,state)+self.lnQ(X_f,X_i,state)
+        #print a,sp.log(u)
         if sp.log(u)<=a:
             acc=True
         else:

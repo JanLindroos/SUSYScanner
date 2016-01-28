@@ -170,7 +170,6 @@ class chain(object):
                 
                 #Fill updates for sending
                 self.updates=dict([(key,getattr(self,key)) for key in self.updates.keys()])
-                #print 'batch ready for send', self.updates
                 #Set send status to true    
                 self.send=True
 

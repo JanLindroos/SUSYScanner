@@ -95,7 +95,7 @@ def scan(rank,alg,model,opt,connection=None):
         #print 'X_i after calc:',dir(X_i)
         
         #If accept update
-        if X_f.accept:            
+        if X_f.accept:
             #Write data to file and screen        
             writer.add(X_i)
             printer.print_model(X_i)

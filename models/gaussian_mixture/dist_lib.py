@@ -32,8 +32,8 @@ def lnP(dist_vars,params,debug=False):
         #print params
         x=sp.array([params[dist_vars['vars'][i]] for i in range(len(mu[0]))])
         lnP_k=sp.array([-0.5*(sp.dot((x-mu[i]),sp.dot(inv(cov[i]),(x-mu[i])))) for i in range(len(w))])
-        lnp=sp.log(sp.sum(w*sp.exp(lnP_k)))
-        #lnp=logsumexp(lnP_k,b=sp.array(w))
+        #lnp=sp.log(sp.sum(w*sp.exp(lnP_k)))
+        lnp=logsumexp(lnP_k,b=sp.array(w))
         
         if debug==True:
             lnp_t=0
@@ -46,7 +46,7 @@ def lnP(dist_vars,params,debug=False):
     return lnp
 
 #Generate random Gaussian mixture model with k gaussians within range given by span
-def gen_dist(dist,scan_range,k,sigma,w=None,sym=True,uncorr=True,):    
+def gen_dist(dist,scan_range,k,sigma,w=None,sym=True,uncorr=True,norm=False):    
     if dist=='gaussian':
         x_max,x_min=[[],[]]
         dist_vars={'vars':[]}
@@ -80,7 +80,8 @@ def gen_dist(dist,scan_range,k,sigma,w=None,sym=True,uncorr=True,):
             dist_vars['cov']=[rnd_cov(N_d,sigma)*SD for i  in range(k)]
             
     #adjust weights according to covariance
-    dist_vars['w']=[dist_vars['w'][i]/float(sp.sqrt(det(dist_vars['cov'][i]))) for i in range(len(dist_vars['w']))]
+    if norm:
+        dist_vars['w']=[dist_vars['w'][i]/float(sp.sqrt(det(dist_vars['cov'][i]))) for i in range(len(dist_vars['w']))]
     return dist_vars
 
 #Method to scale unit coordinates

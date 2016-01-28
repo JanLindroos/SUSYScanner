@@ -4,7 +4,7 @@ Created on Tue May 13 20:45:25 2014
 
 @author: Jan
 
-Library for clustering, uses cython for speedup
+Library for clustering
 """
 
 import scipy as sp
@@ -59,6 +59,8 @@ def cluster(data_dict,k,norm=False,maxit=100,lnw=None,dcmin=1e-5,do_pp=1,centroi
         for i in range(maxit):
             #Find nearest centroid
             #print '%i. iter: Partitioning data...'%i
+            #print data
+            #print centroids
             cind=nearest_centroids(data,centroids)
             #print '%i. iter: New centroids...'%i
             c_means,dc,w_s=new_centroids(data,weight,cind,centroids)
@@ -135,6 +137,7 @@ def nearest_centroids(x,c):
     
     dc=sp.zeros((len(c[0,:]),len(x[0,:])))
     for i in xrange(len(c[0,:])):
+        #dc[i,:]=sp.sum(sp.subtract(x.T,c[:,i])**2,1)
         dc[i,:]=sp.sum(sp.subtract(x.T,c[:,i])**2,1)
 
     cind=sp.argmin(dc,0)
